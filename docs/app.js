@@ -371,10 +371,10 @@
     var html = '', dots = '';
     list.forEach(function (b, i) {
       var link = safeUrl(b.linkUrl);
-      var style = 'background-color:' + safeColor(b.color) + ';';
-      if (b.imageFileId) style += "background-image:url('" + driveImg(b.imageFileId) + "');";
-      html += '<div class="slide' + (link ? ' link' : '') + (b.imageFileId ? ' has-img' : '') + '" style="' + style + '" data-act="banner-open" data-idx="' + i + '"' +
-        (link ? ' role="button" tabindex="0"' : '') + '><div class="slide-txt"><div class="slide-t">' + esc(b.title) + '</div>' +
+      // พื้นการ์ดเป็นสีเหลืองตามดีไซน์กลาง (สีที่ admin เลือกยังเก็บไว้ในข้อมูล แต่ไม่ใช้วาดพื้น)
+      var img = b.imageFileId ? '<img class="slide-img" src="' + driveImg(b.imageFileId) + '" alt="" width="800" height="300" loading="lazy" decoding="async">' : '';
+      html += '<div class="slide' + (link ? ' link' : '') + (b.imageFileId ? ' has-img' : '') + '" data-act="banner-open" data-idx="' + i + '"' +
+        (link ? ' role="button" tabindex="0"' : '') + '>' + img + '<div class="slide-txt"><div class="slide-t">' + esc(b.title) + '</div>' +
         (b.subtitle ? '<div class="slide-s">' + esc(b.subtitle) + '</div>' : '') + '</div></div>';
       dots += '<button class="dot-b' + (i === 0 ? ' on' : '') + '" data-act="banner-dot" data-idx="' + i + '" aria-label="แบนเนอร์ที่ ' + (i + 1) + '"></button>';
     });
@@ -384,9 +384,12 @@
     $('bannerTrack').scrollLeft = 0;
     startBannerTimer();
   }
+  function reducedMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
   function bannerGo(i) {
     var track = $('bannerTrack');
-    track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
+    track.scrollTo({ left: i * track.clientWidth, behavior: reducedMotion() ? 'auto' : 'smooth' });
   }
   function updateBannerDots() {
     var track = $('bannerTrack');
@@ -399,7 +402,7 @@
   function startBannerTimer() {
     stopBannerTimer();
     var n = state.data ? state.data.banners.length : 0;
-    if (n < 2) return;
+    if (n < 2 || reducedMotion()) return;     // ผู้ใช้ตั้งลดการเคลื่อนไหว → ไม่เลื่อนอัตโนมัติ
     state.bannerTimer = setInterval(function () {
       if (document.hidden || state.view !== 'home') return;
       var next = (state.bannerIdx + 1) % n;
@@ -426,7 +429,7 @@
     state.data.systems.forEach(function (s) {
       var hasLink = !!safeUrl(s.url);
       html += '<button class="sys-item' + (hasLink ? '' : ' nolink') + '" data-act="open-sys" data-id="' + esc(s.id) + '" title="' + esc(s.desc || s.name) + '">' +
-        '<span class="sys-ico" style="color:' + safeColor(s.color) + '">' + mi(s.icon) + '</span><span class="sys-lbl">' + esc(s.name) + '</span>' +
+        '<span class="sys-ico">' + mi(s.icon) + '</span><span class="sys-lbl">' + esc(s.name) + '</span>' +
         (hasLink ? '' : '<span class="sys-note">ยังไม่มีลิงค์</span>') + '</button>';
     });
     if (isAdmin()) {
@@ -546,7 +549,7 @@
       o.title = it.name; o.sub = (it.category ? it.category + ' · ' : '') + (it.url ? 'ตั้งลิงค์แล้ว' : 'ยังไม่ได้ตั้งลิงค์');
       o.on = it.visible; o.move = true;
     } else if (kind === 'banners') {
-      o.lead = it.imageFileId ? '<span class="lead" style="background-image:url(\'' + driveImg(it.imageFileId) + '\')"></span>' :
+      o.lead = it.imageFileId ? '<span class="lead"><img src="' + driveImg(it.imageFileId) + '" alt="" width="44" height="44" loading="lazy" decoding="async"></span>' :
         '<span class="lead" style="background:' + safeColor(it.color) + '">' + mi('view_carousel') + '</span>';
       o.title = it.title; o.sub = it.subtitle || 'ไม่มีข้อความรอง'; o.on = it.visible; o.move = true;
     } else if (kind === 'announcements') {
@@ -628,11 +631,11 @@
       var pm = total ? Math.round(s.mobile * 100 / total) : 0;
       var pd = total ? 100 - pm : 0;
       h += '<div class="form-card"><h3 class="sec-title" style="margin-top:0">สัดส่วนมือถือ / คอมพิวเตอร์ (' + s.days + ' วัน)</h3>' +
-        (total ? '<div class="split"><i style="width:' + pm + '%;background:#185FA5"></i><i style="width:' + pd + '%;background:#E8710A"></i></div>' : '<div class="muted">ยังไม่มีข้อมูล</div>') +
-        '<div class="legend"><span><span class="sw-dot" style="background:#185FA5"></span>มือถือ <b>' + pm + '%</b> (' + fmtNum(s.mobile) + ')</span>' +
+        (total ? '<div class="split"><i style="width:' + pm + '%;background:#1A4FA8"></i><i style="width:' + pd + '%;background:#E8710A"></i></div>' : '<div class="muted">ยังไม่มีข้อมูล</div>') +
+        '<div class="legend"><span><span class="sw-dot" style="background:#1A4FA8"></span>มือถือ <b>' + pm + '%</b> (' + fmtNum(s.mobile) + ')</span>' +
         '<span><span class="sw-dot" style="background:#E8710A"></span>คอมพิวเตอร์ <b>' + pd + '%</b> (' + fmtNum(s.desktop) + ')</span></div></div>';
       h += '<div class="form-card"><h3 class="sec-title" style="margin-top:0">เอกสารที่โหลดมากสุด (' + s.days + ' วัน)</h3>' + barsHtml(s.topDocs) + '</div>';
-      h += '<p class="hint" style="text-align:center">ระบบไม่เก็บชื่อผู้ใช้ และไม่เก็บ IP</p>';
+      h += '<p class="hint">ระบบไม่เก็บชื่อผู้ใช้ และไม่เก็บ IP</p>';
     }
     body.innerHTML = h;
   }
@@ -1221,8 +1224,20 @@
     }
   });
 
+  // ===== ฟอนต์ไอคอน: โหลดเสร็จค่อยแสดง (กันเห็นชื่อไอคอนเป็นตัวหนังสือชั่วคราว) =====
+  function watchIconFont() {
+    var root = document.documentElement;
+    var ready = function () { root.classList.add('icons-ready'); };
+    try {
+      if (document.fonts && document.fonts.load) document.fonts.load('24px "Material Icons"', 'home').then(ready, ready);
+      else ready();
+    } catch (e) { ready(); }
+    setTimeout(ready, 2500);      // กันพลาดกรณีโหลดฟอนต์ไม่ขึ้น
+  }
+
   // ===== เริ่มทำงาน =====
   function boot() {
+    watchIconFont();
     state.token = ssGet(TOKEN_KEY) || '';
     var track = $('bannerTrack');
     var scrollTimer = null;
@@ -1234,7 +1249,8 @@
     $('searchInput').addEventListener('input', debounce(renderSearchView, 250));
     $('docSearch').addEventListener('input', debounce(renderDocsView, 250));
 
-    // แสดงข้อมูลจาก cache ทันที แล้วโหลดใหม่เบื้องหลัง
+    // แสดงข้อมูลจาก cache (localStorage) ทันที แล้วโหลดใหม่เบื้องหลังเพียงครั้งเดียวตอนเปิดแอป
+    // (การสลับหน้ากลับมาหน้าแรกไม่ยิง getPublicData ซ้ำ จึงไม่ต้องมี throttle เพิ่ม)
     var cached = null;
     try { cached = JSON.parse(lsGet(CACHE_KEY) || 'null'); } catch (e) { cached = null; }
     if (cached && cached.data && cached.data.systems) state.data = cached.data;

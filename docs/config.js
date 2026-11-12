@@ -10,5 +10,5 @@
  * ถ้าปล่อยว่าง หน้าเว็บจะแสดงข้อความ "ยังไม่ได้ตั้งค่าที่อยู่ระบบหลังบ้าน"
  */
 window.APP_CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbx0uJ9ZtpTb05OSqBGK51QmhZvjFP-MIOv9-8ZsBKJO66dW9-LODR12X7AobQk1BRn87w/exec'
+  API_URL: ''
 };
