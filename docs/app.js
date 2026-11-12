@@ -1224,15 +1224,126 @@
     }
   });
 
-  // ===== ฟอนต์ไอคอน: โหลดเสร็จค่อยแสดง (กันเห็นชื่อไอคอนเป็นตัวหนังสือชั่วคราว) =====
+  // ===== ไอคอน SVG สำรอง (ใช้เมื่อฟอนต์ Material Icons โหลดไม่ได้ เช่น เครือข่ายบล็อก Google Fonts) =====
+  // รูปแบบเส้นขอบ 24x24 เขียนเองทั้งหมด ไม่ใช้ emoji
+  var SVG_PATHS = {
+    shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z',
+    verified_user: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5',
+    target: 'M12 5a7 7 0 100 14 7 7 0 000-14zM12 10a2 2 0 100 4 2 2 0 000-4zM12 2v3M12 19v3M2 12h3M19 12h3',
+    car: 'M4 16v-4l2-5h12l2 5v4zM4 12h16M7 19v-3M17 19v-3',
+    home: 'M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10',
+    cloud: 'M7 18a4 4 0 01-.5-8 5.5 5.5 0 0110.7-1A4.5 4.5 0 0117 18zM8 21l1-2M12 21l1-2M16 21l1-2',
+    cloud_off: 'M7 18a4 4 0 01-.5-8 5.5 5.5 0 0110.7-1A4.5 4.5 0 0117 18zM4 4l16 16',
+    person: 'M12 4a4 4 0 100 8 4 4 0 000-8zM4 21c0-4.5 3.5-7 8-7s8 2.5 8 7',
+    person_search: 'M9 11a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM2 20c0-3.5 3-6 7-6M18 13a3 3 0 100 6 3 3 0 000-6zM20.2 18.2L22 20',
+    smoking: 'M3 15h13v4H3zM19 15v4M22 15v4M19 12c0-2 2-2 2-4',
+    download: 'M12 4v11M7 11l5 5 5-5M5 20h14',
+    upload: 'M12 17V5M7 9l5-5 5 5M5 20h14',
+    search: 'M10.5 4a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM15.5 15.5L21 21',
+    search_off: 'M10.5 4a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM15.5 15.5L21 21M5 3l16 16',
+    bell: 'M6 17v-6a6 6 0 0112 0v6l2 2H4zM10 21h4',
+    settings: 'M12 9a3 3 0 100 6 3 3 0 000-6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2',
+    add: 'M12 5v14M5 12h14',
+    logout: 'M10 4H5v16h5M16 8l4 4-4 4M20 12H9',
+    login: 'M14 4h5v16h-5M8 8l-4 4 4 4M4 12h11',
+    key: 'M8 15a4 4 0 110-8 4 4 0 010 8zM11 11h10M18 11v4M21 11v3',
+    folder: 'M3 6h6l2 2h10v11H3z',
+    close: 'M6 6l12 12M18 6L6 18',
+    chevron_right: 'M9 5l7 7-7 7',
+    arrow_back: 'M20 12H5M11 6l-6 6 6 6',
+    arrow_upward: 'M12 20V5M6 11l6-6 6 6',
+    arrow_downward: 'M12 4v15M6 13l6 6 6-6',
+    check: 'M5 12l5 5 9-10',
+    edit: 'M4 20l1-4L16 5l3 3L8 19zM14 7l3 3',
+    delete: 'M5 7h14M9 7V4h6v3M7 7l1 13h8l1-13',
+    refresh: 'M20 11a8 8 0 10-2 6M20 4v7h-7',
+    visibility: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 100 6 3 3 0 000-6z',
+    visibility_off: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 100 6 3 3 0 000-6zM4 4l16 16',
+    lock: 'M6 11h12v10H6zM8 11V8a4 4 0 018 0v3',
+    send: 'M3 12L21 4l-7 17-3-7z',
+    save: 'M5 4h12l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6',
+    image: 'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M9 8.5v.5',
+    info: 'M12 3a9 9 0 100 18 9 9 0 000-18zM12 11v6M12 7.5v.5',
+    warning: 'M12 3l10 18H2zM12 10v5M12 18v.5',
+    campaign: 'M4 10v4h3l8 4V6L7 10zM18 9a4 4 0 010 6',
+    doc: 'M6 3h9l4 4v14H6zM9 12h7M9 16h7M9 8h3',
+    apps: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',
+    carousel: 'M3 6h4v12H3zM9 5h6v14H9zM17 6h4v12h-4z',
+    chart: 'M5 20V10M12 20V4M19 20v-7',
+    inbox: 'M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5',
+    box_empty: 'M4 4h16v16H4z',
+    link: 'M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1',
+    map: 'M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14',
+    pin: 'M12 21s-7-6.5-7-11a7 7 0 0114 0c0 4.5-7 11-7 11zM12 8a2.5 2.5 0 100 5 2.5 2.5 0 000-5z',
+    calendar: 'M4 5h16v15H4zM4 10h16M8 3v4M16 3v4',
+    people: 'M9 11a3 3 0 100-6 3 3 0 000 6zM3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M16 6a3 3 0 010 5M17 15c2.5.5 4 2.3 4 5',
+    gavel: 'M5 21h9M8 17l8-8M12 5l7 7M10 7l5-4 6 6-4 5z',
+    circle: 'M12 4a8 8 0 100 16 8 8 0 000-16z'
+  };
+  // ชื่อไอคอนของฟอนต์ -> ชื่อรูปใน SVG_PATHS (ตัวที่ไม่อยู่ในรายการใช้รูปวงกลมแทน)
+  var SVG_ALIAS = {
+    gps_fixed: 'target', directions_car: 'car', traffic: 'car', fire_truck: 'car',
+    home_work: 'home', flood: 'cloud', smoking_rooms: 'smoking', file_download: 'download', upload_file: 'upload',
+    notifications: 'bell', notifications_none: 'bell', notifications_active: 'bell', vpn_key: 'key', admin_panel_settings: 'key',
+    folder_open: 'folder', folder_shared: 'folder', folder_zip: 'folder', error_outline: 'info', report: 'warning',
+    emergency: 'warning', medical_services: 'warning', local_fire_department: 'warning',
+    local_police: 'shield', security: 'shield', policy: 'shield', badge: 'person', fingerprint: 'person',
+    description: 'doc', article: 'doc', assignment: 'doc', picture_as_pdf: 'doc', table_chart: 'doc', slideshow: 'doc',
+    inventory_2: 'inbox', view_carousel: 'carousel', insights: 'chart', bar_chart: 'chart', check_box_outline_blank: 'box_empty',
+    location_on: 'pin', calendar_month: 'calendar', groups: 'people'
+  };
+  // สร้างรหัส SVG ของไอคอนตามชื่อ (ใช้ได้กับทุกชื่อที่ผ่าน safeIcon)
+  function iconSvg(name) {
+    // ใช้ hasOwnProperty เท่านั้น กันชื่อพิเศษ เช่น constructor / __proto__
+    var own = Object.prototype.hasOwnProperty;
+    var key = own.call(SVG_PATHS, name) ? name : (own.call(SVG_ALIAS, name) ? SVG_ALIAS[name] : 'circle');
+    var d = own.call(SVG_PATHS, key) ? SVG_PATHS[key] : SVG_PATHS.circle;
+    return '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="' + d + '"/></svg>';
+  }
+  // แปลงทุก .mi ที่ยังเป็นตัวอักษรให้เป็น SVG
+  function convertIconsToSvg() {
+    var list = document.querySelectorAll('.mi');
+    for (var i = 0; i < list.length; i++) {
+      var el = list[i];
+      if (el.firstElementChild && el.firstElementChild.tagName.toLowerCase() === 'svg') continue;
+      var name = (el.textContent || '').trim();
+      if (!name) continue;
+      el.innerHTML = iconSvg(name);
+    }
+  }
+  var svgObserver = null;
+  function enableIconFallback() {
+    var root = document.documentElement;
+    root.classList.remove('icons-ready');
+    root.classList.add('icons-fallback');
+    convertIconsToSvg();
+    // หน้าจอถูกวาดใหม่บ่อย (modal / รายการ) จึงคอยแปลงไอคอนที่เพิ่มใหม่ตลอด
+    if (!svgObserver && window.MutationObserver) {
+      var busy = false;
+      svgObserver = new MutationObserver(function () {
+        if (busy) return;
+        busy = true;
+        Promise.resolve().then(function () { try { convertIconsToSvg(); } finally { busy = false; } });
+      });
+      svgObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+    }
+  }
+
+  // ===== ฟอนต์ไอคอน: โหลดเสร็จค่อยแสดง; ถ้าไม่ขึ้นใน 3 วินาทีใช้ SVG สำรองแทน =====
   function watchIconFont() {
     var root = document.documentElement;
-    var ready = function () { root.classList.add('icons-ready'); };
+    var settled = false;
+    var ready = function () { if (settled) return; settled = true; root.classList.add('icons-ready'); };
+    var fallback = function () { if (settled) return; settled = true; enableIconFallback(); };
     try {
-      if (document.fonts && document.fonts.load) document.fonts.load('24px "Material Icons"', 'home').then(ready, ready);
-      else ready();
-    } catch (e) { ready(); }
-    setTimeout(ready, 2500);      // กันพลาดกรณีโหลดฟอนต์ไม่ขึ้น
+      if (document.fonts && document.fonts.load) {
+        document.fonts.load('24px "Material Icons"', 'home').then(function (faces) {
+          // ไม่มีฟอนต์ที่โหลดได้เลย (ถูกบล็อก) -> ใช้ SVG ทันที
+          if (faces && faces.length) ready(); else fallback();
+        }, fallback);
+      } else fallback();
+    } catch (e) { fallback(); }
+    setTimeout(fallback, 3000);   // เกิน 3 วินาทียังไม่พร้อม ใช้ SVG สำรอง
   }
 
   // ===== เริ่มทำงาน =====
