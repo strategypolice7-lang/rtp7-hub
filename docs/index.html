@@ -2,12 +2,21 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- ไม่ส่งที่อยู่หน้าเว็บไปให้เว็บอื่น -->
 <meta name="referrer" content="no-referrer">
 <!-- CSP: อนุญาตเฉพาะสคริปต์ของเราเอง / ฟอนต์ Google / รูปจาก Google Drive / เรียก API ไป Apps Script เท่านั้น -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://drive.google.com https://*.googleusercontent.com; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://drive.google.com https://*.googleusercontent.com; connect-src https://script.google.com https://script.googleusercontent.com; manifest-src 'self'; base-uri 'none'; form-action 'none'">
 <title>รวมระบบงาน ป.</title>
+<!-- ติดตั้งเป็นแอปบนหน้าจอหลัก (PWA แบบพื้นฐาน ไม่มี service worker) -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D2B6B">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ระบบงาน ป.">
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -390,7 +399,8 @@ textarea.inp{min-height:110px;resize:vertical}
 <div id="modalRoot"></div>
 <div id="toastRoot" aria-live="polite"></div>
 
-<script src="config.js"></script>
-<script src="app.js"></script>
+<!-- ?v=2.4 กันมือถือค้างไฟล์เก่า (เปลี่ยนเลขเมื่อออกเวอร์ชันใหม่) -->
+<script src="config.js?v=2.4"></script>
+<script src="app.js?v=2.4"></script>
 </body>
 </html>
