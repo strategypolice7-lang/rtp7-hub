@@ -11,17 +11,27 @@
   var ICON_CHOICES = ['gavel', 'directions_car', 'home_work', 'flood', 'person_search', 'shield', 'smoking_rooms', 'description', 'map', 'groups',
     'assignment', 'local_police', 'security', 'campaign', 'insights', 'inventory_2', 'calendar_month', 'gps_fixed', 'traffic', 'fire_truck',
     'local_fire_department', 'medical_services', 'emergency', 'report', 'policy', 'badge', 'fingerprint', 'location_on', 'folder_shared', 'bar_chart'];
-  var COLOR_CHOICES = ['#185FA5', '#0F9D58', '#E8710A', '#D93025', '#7B3FB5', '#00838F', '#C2185B', '#5D4037'];
+  var COLOR_CHOICES = ['#185FA5', '#0F9D58', '#E8710A', '#D93025', '#7B3FB5', '#00838F', '#C2185B', '#5D4037'];   // สีพื้นแบนเนอร์
+  var PALETTE = ['#F6B93B', '#EF6F6C', '#4FC1C8', '#1F5F7A', '#1A4FA8', '#2E9E5B'];                              // ชุดสีวงกลมไอคอนระบบ (ระบบเดิมที่ไม่มีสีใช้วนตามลำดับ)
+  var HERO_SWATCHES = ['#FFD400', '#FFE35C', '#F6B93B', '#EF6F6C', '#4FC1C8', '#1A4FA8', '#0D2B6B', '#FFFFFF'];  // ชุดสีการ์ดวันที่/เวลา
+  var NO_LINK_BG = '#AEB9C9';            // วงเทาของระบบที่ยังไม่มีลิงค์
+  var HERO_DEFAULT_BG = '#FFD400';
+  var HERO_DEFAULT_OVERLAY = 35;         // ความเข้มแผ่นสีทับรูป hero เมื่อยังไม่เคยตั้ง
+  var BANNER_DEFAULT_OVERLAY = 40;       // ความเข้มแผ่นสีทับรูปแบนเนอร์เมื่อยังไม่เคยตั้ง
   var TH_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-  var CACHE_KEY = 'rpt_pub_cache_v1';
+  var TH_MONTHS_FULL = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+  var TH_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+  var CACHE_KEY = 'rpt_pub_cache_v3';
   var READ_KEY = 'rpt_read_ids_v1';
   var TOKEN_KEY = 'rpt_admin_token';
-  var SUB_TITLES = { systems: 'จัดการระบบ', banners: 'การ์ดแบนเนอร์', ann: 'ข้อความวิ่ง และ popup ประกาศ', notif: 'ส่งแจ้งเตือนกระดิ่ง', docs: 'เอกสารดาวน์โหลด', stats: 'สถิติการใช้งาน' };
-  var SUB_KIND = { systems: 'systems', banners: 'banners', ann: 'announcements', notif: 'notifications', docs: 'documents' };
-  var DELETE_FN = { systems: 'deleteSystem', banners: 'deleteBanner', announcements: 'deleteAnnouncement', notifications: 'deleteNotification', documents: 'deleteDocument' };
+  var PIN_MIN = 4, PIN_MAX = 12;         // แป้น PIN: ต้องกดอย่างน้อย 4 หลักถึงกดเข้าสู่ระบบได้, สูงสุด 12 หลัก
+  var SUB_TITLES = { home: 'โลโก้และหน้าแรก', systems: 'จัดการระบบ', banners: 'การ์ดแบนเนอร์', contacts: 'ข้อมูลติดต่อ', ann: 'ข้อความวิ่ง และ popup ประกาศ', notif: 'ส่งแจ้งเตือนกระดิ่ง', docs: 'เอกสารดาวน์โหลด', stats: 'สถิติการใช้งาน' };
+  var DELETE_FN = { systems: 'deleteSystem', banners: 'deleteBanner', contacts: 'deleteContact', announcements: 'deleteAnnouncement', notifications: 'deleteNotification', documents: 'deleteDocument' };
   var MENU = [
+    { key: 'home', icon: 'dashboard_customize', title: 'โลโก้และหน้าแรก' },
     { key: 'systems', icon: 'apps', title: 'จัดการระบบ' },
     { key: 'banners', icon: 'view_carousel', title: 'การ์ดแบนเนอร์' },
+    { key: 'contacts', icon: 'contacts', title: 'ข้อมูลติดต่อ' },
     { key: 'ann', icon: 'campaign', title: 'ข้อความวิ่ง และ popup ประกาศ' },
     { key: 'notif', icon: 'notifications_active', title: 'ส่งแจ้งเตือนกระดิ่ง' },
     { key: 'docs', icon: 'folder_open', title: 'เอกสารดาวน์โหลด' },
@@ -30,7 +40,7 @@
 
   var state = {
     data: null, admin: null, token: '', view: 'home', sub: '',
-    bannerIdx: 0, bannerTimer: null, bannerSig: '', tickerSig: '',
+    bannerIdx: 0, bannerTimer: null, bannerSig: '', tickerSig: '', heroSig: '', clockTimer: null, homeDraft: null,
     popupShown: false, statsDays: 30, statsData: null, statsSeq: 0, statsError: false,
     offlineToastShown: false, configError: ''
   };
@@ -49,7 +59,7 @@
   function safeColor(c) { return /^#[0-9a-fA-F]{6}$/.test(String(c || '')) ? c : '#185FA5'; }
   function safeIcon(i) { return /^[a-z0-9_]{1,40}$/.test(String(i || '')) ? i : 'apps'; }
   function mi(name, extra) { return '<span class="mi' + (extra ? ' ' + extra : '') + '">' + safeIcon(name) + '</span>'; }
-  function driveImg(fileId) { return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=w800'; }
+  function driveImg(fileId, size) { return 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) + '&sz=w' + (size || 800); }
   // ทุกคีย์ที่เก็บในเบราว์เซอร์ใส่คำนำหน้า rtp7hub_ (เพราะ username.github.io เป็น origin เดียวกับโปรเจกต์อื่น)
   var KEY_PREFIX = 'rtp7hub_';
   function lsGet(k) { try { return window.localStorage.getItem(KEY_PREFIX + k); } catch (e) { return null; } }
@@ -77,6 +87,52 @@
     return (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768) ? 'mobile' : 'desktop';
   }
   function isAdmin() { return !!state.token; }
+  function safeFileId(v) { return /^[A-Za-z0-9_-]{10,80}$/.test(String(v || '')) ? String(v) : ''; }
+  function safeHex(v) { return /^#[0-9a-fA-F]{6}$/.test(String(v || '')) ? String(v).toUpperCase() : ''; }
+  /** เบอร์โทรสำหรับลิงค์ tel: ตัวเลข/ขีด/+ เท่านั้น (+ ต้องอยู่หน้าสุด) ไม่ผ่านคืนค่าว่าง */
+  function safeTel(p) {
+    var s = String(p || '').replace(/\s+/g, '');
+    return /^\+?[0-9][0-9\-]{2,18}$/.test(s) ? s : '';
+  }
+  /** ลิงค์ LINE ต้องเป็น https://line.me/ เท่านั้น */
+  function safeLine(u) {
+    var s = safeUrl(u);
+    return /^https:\/\/line\.me\/[^\s<>"']+$/i.test(s) ? s : '';
+  }
+  /** ที่อยู่รูปที่ยอมใส่ใน CSS url(): รูปจาก Drive หรือ data URL ของรูปเท่านั้น */
+  function safeImgSrc(u) {
+    var s = String(u || '');
+    return /^(https:\/\/drive\.google\.com\/|data:image\/)[^'"\s<>()\\]+$/.test(s) ? s : '';
+  }
+  function overlayPct(v, def) {
+    if (v === null || v === undefined || v === '') return def;
+    var n = Number(v);
+    if (isNaN(n)) return def;
+    return Math.max(0, Math.min(90, Math.round(n)));
+  }
+
+  // ----- สี: ผสม / ความสว่าง / อัตราส่วนความต่างสี (ใช้ให้ตัวอักษรอ่านออกเสมอ) -----
+  function hexToRgb(h) {
+    var m = /^#([0-9a-fA-F]{6})$/.exec(h || '');
+    var n = m ? parseInt(m[1], 16) : 0;
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function rgbToHex(r, g, b) {
+    function x(v) { v = Math.max(0, Math.min(255, Math.round(v))); return ('0' + v.toString(16)).slice(-2); }
+    return ('#' + x(r) + x(g) + x(b)).toUpperCase();
+  }
+  function mixHex(a, b, t) {
+    var A = hexToRgb(a), B = hexToRgb(b);
+    return rgbToHex(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, A[2] + (B[2] - A[2]) * t);
+  }
+  function relLum(hex) {
+    var c = hexToRgb(hex).map(function (v) { v = v / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  }
+  function contrastRatio(a, b) {
+    var l1 = relLum(a), l2 = relLum(b);
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  }
 
   // ===== เรียก server =====
   // ข้อความภาษาไทยที่ผู้ใช้เห็น
@@ -194,13 +250,33 @@
 
   // ===== modal =====
   var modalStack = [];
-  function openModal(opts) {
+  /** ติดตั้งกล่องลงใน overlay และจัดการปิด/ซ้อนกัน (ใช้ร่วมกันทั้ง modal ทั่วไปและแป้น PIN) */
+  function mountOverlay(box, opts) {
     var ov = document.createElement('div');
     ov.className = 'ov';
+    var handle = { el: ov, box: box, closable: opts.closable !== false, closed: false };
+    handle.close = function () {
+      if (handle.closed) return;
+      handle.closed = true;
+      var i = modalStack.indexOf(handle);
+      if (i >= 0) modalStack.splice(i, 1);
+      if (ov.parentNode) ov.parentNode.removeChild(ov);
+      if (!modalStack.length) document.body.classList.remove('no-scroll');
+      if (opts.onClose) opts.onClose();
+    };
+    ov.appendChild(box);
+    if (opts.overlayClose) ov.addEventListener('mousedown', function (e) { if (e.target === ov) handle.close(); });
+    $('modalRoot').appendChild(ov);
+    document.body.classList.add('no-scroll');
+    modalStack.push(handle);
+    return handle;
+  }
+  function openModal(opts) {
     var box = document.createElement('div');
     box.className = 'modal';
     box.setAttribute('role', 'dialog');
     box.setAttribute('aria-modal', 'true');
+    var handle = mountOverlay(box, opts);
     var head = document.createElement('div');
     head.className = 'm-head';
     head.innerHTML = mi(opts.icon || 'info') + '<h3></h3>';
@@ -208,14 +284,7 @@
     var body = document.createElement('div');
     body.className = 'm-body';
     if (typeof opts.body === 'string') body.innerHTML = opts.body; else if (opts.body) body.appendChild(opts.body);
-    var handle = { el: ov, box: box, body: body, closable: opts.closable !== false };
-    handle.close = function () {
-      var i = modalStack.indexOf(handle);
-      if (i >= 0) modalStack.splice(i, 1);
-      if (ov.parentNode) ov.parentNode.removeChild(ov);
-      if (!modalStack.length) document.body.classList.remove('no-scroll');
-      if (opts.onClose) opts.onClose();
-    };
+    handle.body = body;
     if (handle.closable) {
       var x = document.createElement('button');
       x.className = 'm-x';
@@ -243,11 +312,6 @@
       });
       box.appendChild(foot);
     }
-    ov.appendChild(box);
-    if (opts.overlayClose) ov.addEventListener('mousedown', function (e) { if (e.target === ov) handle.close(); });
-    $('modalRoot').appendChild(ov);
-    document.body.classList.add('no-scroll');
-    modalStack.push(handle);
     if (opts.focus) { var f = body.querySelector(opts.focus); if (f) setTimeout(function () { f.focus(); }, 60); }
     return handle;
   }
@@ -327,6 +391,13 @@
     $('keyIcon').textContent = admin ? 'admin_panel_settings' : 'vpn_key';
     $('keyBtn').classList.toggle('admin-on', admin);
     $('keyBtn').setAttribute('aria-label', admin ? 'โหมด admin' : 'เข้าโหมด admin');
+    // โลโก้: ถ้า admin อัปโหลดไว้แสดงรูป ไม่มีใช้ไอคอนโล่
+    var id = safeFileId(state.data && state.data.home ? state.data.home.logoFileId : '');
+    var logo = $('hdrLogo');
+    if (logo.getAttribute('data-id') !== id) {
+      logo.setAttribute('data-id', id);
+      logo.innerHTML = id ? '<img class="logo-img" src="' + driveImg(id, 256) + '" alt="" width="44" height="44" decoding="async" data-icon="shield">' : mi('shield');
+    }
   }
 
   function getReadMap() {
@@ -339,12 +410,9 @@
   }
   function updateBadges() {
     var c = unreadCount();
-    var txt = c > 9 ? '9+' : String(c);
-    ['bellBadge', 'navBadge'].forEach(function (id) {
-      var el = $(id);
-      el.textContent = txt;
-      el.hidden = c === 0;
-    });
+    var el = $('bellBadge');
+    el.textContent = c > 9 ? '9+' : String(c);
+    el.hidden = c === 0;
   }
 
   function renderTicker() {
@@ -360,6 +428,11 @@
     run.style.animationDuration = Math.max(14, Math.round(text.length * 0.28)) + 's';
   }
 
+  /** พื้นแบนเนอร์ไล่เฉดจากสีที่ admin เลือก (ไม่มีรูป) */
+  function bannerGradient(color) {
+    var c = safeHex(color) || '#1A4FA8';
+    return 'linear-gradient(135deg,' + mixHex(c, '#FFFFFF', 0.12) + ',' + mixHex(c, '#000000', 0.38) + ')';
+  }
   function renderBanners() {
     var list = (state.data && state.data.banners) || [];
     var wrap = $('bannerWrap');
@@ -371,9 +444,12 @@
     var html = '', dots = '';
     list.forEach(function (b, i) {
       var link = safeUrl(b.linkUrl);
-      // พื้นการ์ดเป็นสีเหลืองตามดีไซน์กลาง (สีที่ admin เลือกยังเก็บไว้ในข้อมูล แต่ไม่ใช้วาดพื้น)
-      var img = b.imageFileId ? '<img class="slide-img" src="' + driveImg(b.imageFileId) + '" alt="" width="800" height="300" loading="lazy" decoding="async">' : '';
-      html += '<div class="slide' + (link ? ' link' : '') + (b.imageFileId ? ' has-img' : '') + '" data-act="banner-open" data-idx="' + i + '"' +
+      var col = safeHex(b.color) || '#1A4FA8';
+      var ov = overlayPct(b.overlay, BANNER_DEFAULT_OVERLAY);
+      // มีรูป: รูป + แผ่นสีทับ (สี/ความเข้มปรับได้ต่อแบนเนอร์) ไม่มีรูป: พื้นไล่เฉดจากสีที่เลือก
+      var img = b.imageFileId ? '<img class="slide-img" src="' + driveImg(b.imageFileId) + '" alt="" width="800" height="300" loading="lazy" decoding="async">' +
+        '<div class="slide-ov" style="background:' + col + ';opacity:' + (ov / 100) + '"></div>' : '';
+      html += '<div class="slide' + (link ? ' link' : '') + (b.imageFileId ? ' has-img' : '') + '" style="background:' + bannerGradient(col) + '" data-act="banner-open" data-idx="' + i + '"' +
         (link ? ' role="button" tabindex="0"' : '') + '>' + img + '<div class="slide-txt"><div class="slide-t">' + esc(b.title) + '</div>' +
         (b.subtitle ? '<div class="slide-s">' + esc(b.subtitle) + '</div>' : '') + '</div></div>';
       dots += '<button class="dot-b' + (i === 0 ? ' on' : '') + '" data-act="banner-dot" data-idx="' + i + '" aria-label="แบนเนอร์ที่ ' + (i + 1) + '"></button>';
@@ -413,10 +489,29 @@
     if (state.bannerTimer) { clearInterval(state.bannerTimer); state.bannerTimer = null; }
   }
 
+  // ----- วงกลมไอคอนระบบแบบเงายาว -----
+  function indexById(list, id) {
+    for (var i = 0; i < (list || []).length; i++) if (list[i].id === id) return i;
+    return -1;
+  }
+  /** สีพื้นวงกลมของระบบ: ใช้ iconBg ที่ตั้งไว้ ถ้าว่างใช้สีจากชุดวนตามลำดับ (คำนวณฝั่งนี้ ไม่เขียนกลับชีต) */
+  function sysBg(s) {
+    var own = safeHex(s.iconBg);
+    if (own) return own;
+    var i = indexById(state.data ? state.data.systems : [], s.id);
+    if (i < 0) i = indexById(state.admin ? state.admin.systems : [], s.id);
+    return PALETTE[(i < 0 ? 0 : i) % PALETTE.length];
+  }
+  /** เนื้อในวงกลม: รูปที่อัปโหลด (ขนาด ~60%) หรือไอคอนจากชุด */
+  function sysGlyph(icon, fileId) {
+    var id = safeFileId(fileId);
+    return id ? '<img class="ls-img" src="' + driveImg(id, 256) + '" alt="" data-icon="' + safeIcon(icon) + '" loading="lazy" decoding="async">' : mi(icon);
+  }
+
   function renderGrid() {
     var grid = $('sysGrid');
     if (!state.data && state.configError) {
-      grid.innerHTML = '<div class="empty" style="grid-column:1/-1">' + mi('settings') + esc(state.configError) + '</div>';
+      grid.innerHTML = '<div class="empty" style="grid-column:1/-1;border:0">' + mi('settings') + esc(state.configError) + '</div>';
       return;
     }
     if (!state.data) {
@@ -429,14 +524,14 @@
     state.data.systems.forEach(function (s) {
       var hasLink = !!safeUrl(s.url);
       html += '<button class="sys-item' + (hasLink ? '' : ' nolink') + '" data-act="open-sys" data-id="' + esc(s.id) + '" title="' + esc(s.desc || s.name) + '">' +
-        '<span class="sys-ico">' + mi(s.icon) + '</span><span class="sys-lbl">' + esc(s.name) + '</span>' +
+        '<span class="ls sys-ico" style="--c:' + (hasLink ? sysBg(s) : NO_LINK_BG) + '">' + sysGlyph(s.icon, s.iconFileId) + '</span><span class="sys-lbl">' + esc(s.name) + '</span>' +
         (hasLink ? '' : '<span class="sys-note">ยังไม่มีลิงค์</span>') + '</button>';
     });
     if (isAdmin()) {
-      html += '<button class="sys-item sys-add" data-act="add-sys-home"><span class="sys-ico">' + mi('add') + '</span><span class="sys-lbl">เพิ่มระบบ</span></button>';
+      html += '<button class="sys-item sys-add" data-act="add-sys-home"><span class="ls sys-ico">' + mi('add') + '</span><span class="sys-lbl">เพิ่มระบบ</span></button>';
     }
     if (!html) {
-      html = '<div class="empty" style="grid-column:1/-1">' + mi('apps') + 'ยังไม่มีระบบให้แสดง</div>';
+      html = '<div class="empty" style="grid-column:1/-1;border:0">' + mi('apps') + 'ยังไม่มีระบบให้แสดง</div>';
     }
     grid.innerHTML = html;
   }
@@ -447,25 +542,105 @@
       '<div class="row-txt"><div class="row-t">' + esc(d.name) + '</div><div class="row-s">' + esc(m.label) + (d.createdAt ? ' · ' + esc(fmtDate(d.createdAt)) : '') + '</div></div>' +
       '<button class="dl-btn" data-act="dl-doc" data-id="' + esc(d.id) + '" aria-label="ดาวน์โหลด ' + esc(d.name) + '">' + mi('download') + '</button></div>';
   }
-  function renderRecentDocs() {
-    var box = $('recentDocs');
-    if (!state.data) { box.innerHTML = state.configError ? '' : '<div class="skel" style="height:64px"></div>'; return; }
-    // เอกสารล่าสุด 3 รายการ เรียงตามวันที่เพิ่ม (หน้าเอกสารทั้งหมดยังเรียงตาม sortOrder)
-    var docs = state.data.documents.slice().sort(function (a, b) { return (b.createdAt || '').localeCompare(a.createdAt || ''); }).slice(0, 3);
-    if (!docs.length) { box.innerHTML = '<div class="empty">' + mi('folder_open') + 'ยังไม่มีเอกสาร</div>'; return; }
-    box.innerHTML = '<div class="card-list">' + docs.map(docRowHtml).join('') + '</div>';
-  }
   function renderVersion() {
     var v = state.data && state.data.version ? ' ' + state.data.version : '';
     $('verLine').textContent = 'รวมระบบงาน ป.' + v;
   }
 
+  // ----- การ์ดวัน/วันที่/นาฬิกา (hero) -----
+  /** cfg = {bg: '#RRGGBB'|'' , imgSrc: ที่อยู่รูป|'' , overlay: 0-90|null, text: 'dark'|'light'} */
+  function heroCfgFromHome(h) {
+    h = h || {};
+    var id = safeFileId(h.heroFileId);
+    return { bg: safeHex(h.heroBg), imgSrc: id ? driveImg(id, 800) : '', overlay: h.heroOverlay, text: h.heroText === 'light' ? 'light' : 'dark' };
+  }
+  /** สีตัวอักษรที่ใช้จริง: ถ้าที่ admin เลือกอ่านยากบนพื้น (ต่างสีน้อยกว่า 3:1) สลับเป็นอีกสีให้อัตโนมัติ */
+  function heroTextMode(cfg) {
+    var want = cfg.text === 'light' ? 'light' : 'dark';
+    var base = cfg.bg || HERO_DEFAULT_BG;
+    if (safeImgSrc(cfg.imgSrc) && overlayPct(cfg.overlay, HERO_DEFAULT_OVERLAY) < 50) return want;   // พื้นเป็นรูป: เชื่อค่าที่เลือก (มีเงาตัวอักษรช่วย)
+    var fg = want === 'light' ? '#FFFFFF' : '#0D2B6B';
+    if (contrastRatio(fg, base) < 3) return want === 'light' ? 'dark' : 'light';
+    return want;
+  }
+  function heroFlipped(cfg) { return heroTextMode(cfg) !== (cfg.text === 'light' ? 'light' : 'dark'); }
+  function applyHero(el, cfg) {
+    if (!el) return;
+    var img = safeImgSrc(cfg.imgSrc);
+    var base = cfg.bg || HERO_DEFAULT_BG;
+    var html = '';
+    if (img) {
+      html += '<div class="hero-img" style="background-image:url(\'' + img + '\')"></div>' +
+        '<div class="hero-ov" style="background:' + base + ';opacity:' + (overlayPct(cfg.overlay, HERO_DEFAULT_OVERLAY) / 100) + '"></div>';
+    }
+    html += '<div class="hero-in"><div class="hero-day" data-ck="day"></div><div class="hero-date" data-ck="date"></div>' +
+      '<div class="hero-time"><span class="hero-hm" data-ck="hm"></span><span class="hero-sec" data-ck="sec"></span></div></div>';
+    el.className = 'hero ' + heroTextMode(cfg) + (img ? ' has-img' : '');
+    el.style.background = cfg.bg && !img ? 'linear-gradient(120deg,' + cfg.bg + ',' + mixHex(cfg.bg, '#FFFFFF', 0.3) + ')' : '';
+    el.innerHTML = html;
+    tickClock(true);
+  }
+  function renderHero() {
+    var cfg = heroCfgFromHome(state.data ? state.data.home : null);
+    var sig = JSON.stringify(cfg);
+    if (sig === state.heroSig) return;
+    state.heroSig = sig;
+    applyHero($('heroHome'), cfg);
+  }
+
+  // ----- นาฬิกา: setInterval ตัวเดียว หยุดเมื่อแท็บถูกซ่อน กลับมาเดินต่อเมื่อแท็บแสดง -----
+  function two(n) { return ('0' + n).slice(-2); }
+  function clockParts(d) {
+    return {
+      day: 'วัน' + TH_DAYS[d.getDay()] + 'ที่',
+      date: d.getDate() + ' ' + TH_MONTHS_FULL[d.getMonth()] + ' ' + (d.getFullYear() + 543),
+      hm: two(d.getHours()) + ':' + two(d.getMinutes()),
+      sec: ':' + two(d.getSeconds()) + ' น.'
+    };
+  }
+  function tickClock(force) {
+    // เฉพาะตอนที่หน้าแรก (หรือหน้าตัวอย่างในตั้งค่าหน้าแรก) แสดงอยู่ เพื่อไม่เปลืองแรงเครื่อง
+    if (!force && state.view !== 'home' && !(state.view === 'sub' && state.sub === 'home')) return;
+    var els = document.querySelectorAll('[data-ck]');
+    if (!els.length) return;
+    var p = clockParts(new Date());
+    for (var i = 0; i < els.length; i++) {
+      var v = p[els[i].getAttribute('data-ck')];
+      if (v !== undefined && els[i].textContent !== v) els[i].textContent = v;
+    }
+  }
+  function startClock() {
+    if (state.clockTimer) return;                 // ไม่สร้างซ้ำ
+    tickClock(true);
+    state.clockTimer = setInterval(tickClock, 1000);
+  }
+  function stopClock() {
+    if (state.clockTimer) { clearInterval(state.clockTimer); state.clockTimer = null; }
+  }
+
   function renderHome() {
+    renderHero();
     renderTicker();
     renderBanners();
     renderGrid();
-    renderRecentDocs();
     renderVersion();
+  }
+
+  // ----- หน้าติดต่อ -----
+  function contactCardHtml(c) {
+    var tel = safeTel(c.phone), line = safeLine(c.line);
+    var acts = (tel ? '<a class="btn btn-call" href="tel:' + esc(tel) + '">' + mi('call') + '<span>โทร</span></a>' : '') +
+      (line ? '<a class="btn btn-line" href="' + esc(line) + '" target="_blank" rel="noopener noreferrer">' + mi('chat') + '<span>LINE</span></a>' : '');
+    return '<article class="c-card"><div class="c-top"><span class="lead" style="background:#1A4FA8">' + mi('person') + '</span>' +
+      '<div class="row-txt"><div class="c-name">' + esc(c.name) + '</div>' + (c.position ? '<div class="c-pos">' + esc(c.position) + '</div>' : '') +
+      (tel ? '<div class="c-phone">' + esc(c.phone) + '</div>' : '') + '</div></div>' + (acts ? '<div class="c-acts">' + acts + '</div>' : '') + '</article>';
+  }
+  function renderContactView() {
+    var box = $('contactList');
+    if (!state.data) { box.innerHTML = pendingBlock(); return; }
+    var list = state.data.contacts || [];
+    if (!list.length) { box.innerHTML = '<div class="empty">' + mi('contacts') + 'ยังไม่มีข้อมูลติดต่อ</div>'; return; }
+    box.innerHTML = list.map(contactCardHtml).join('');
   }
 
   function renderDocsView() {
@@ -492,7 +667,7 @@
     box.innerHTML = '<div class="card-list">' + list.map(function (s) {
       var hasLink = !!safeUrl(s.url);
       return '<button class="row" data-act="open-sys" data-id="' + esc(s.id) + '"' + (hasLink ? '' : ' style="opacity:.55"') + '>' +
-        '<span class="lead" style="background:' + safeColor(s.color) + '">' + mi(s.icon) + '</span>' +
+        '<span class="lead ls" style="--c:' + (hasLink ? sysBg(s) : NO_LINK_BG) + '">' + sysGlyph(s.icon, s.iconFileId) + '</span>' +
         '<span class="row-txt"><span class="row-t">' + esc(s.name) + '</span><br><span class="row-s">' + esc(s.desc || s.category || '') + (hasLink ? '' : ' (ยังไม่ได้ตั้งลิงค์)') + '</span></span>' +
         mi('chevron_right') + '</button>';
     }).join('') + '</div>';
@@ -545,13 +720,18 @@
   function rowInfo(kind, it) {
     var o = { lead: '', title: '', sub: '', on: true, flagOn: 'ซ่อน', flagOff: 'แสดง', offTag: 'ซ่อนอยู่', edit: true, move: false };
     if (kind === 'systems') {
-      o.lead = '<span class="lead" style="background:' + safeColor(it.color) + '">' + mi(it.icon) + '</span>';
+      o.lead = '<span class="lead ls" style="--c:' + sysBg(it) + '">' + sysGlyph(it.icon, it.iconFileId) + '</span>';
       o.title = it.name; o.sub = (it.category ? it.category + ' · ' : '') + (it.url ? 'ตั้งลิงค์แล้ว' : 'ยังไม่ได้ตั้งลิงค์');
       o.on = it.visible; o.move = true;
     } else if (kind === 'banners') {
       o.lead = it.imageFileId ? '<span class="lead"><img src="' + driveImg(it.imageFileId) + '" alt="" width="44" height="44" loading="lazy" decoding="async"></span>' :
         '<span class="lead" style="background:' + safeColor(it.color) + '">' + mi('view_carousel') + '</span>';
       o.title = it.title; o.sub = it.subtitle || 'ไม่มีข้อความรอง'; o.on = it.visible; o.move = true;
+    } else if (kind === 'contacts') {
+      o.lead = '<span class="lead" style="background:#1A4FA8">' + mi('person') + '</span>';
+      o.title = it.name;
+      o.sub = [it.position, it.phone ? 'โทร ' + it.phone : '', it.line ? 'มี LINE' : ''].filter(function (x) { return !!x; }).join(' · ') || 'ไม่มีรายละเอียด';
+      o.on = it.visible; o.move = true;
     } else if (kind === 'announcements') {
       var isPopup = it.type === 'popup';
       o.lead = '<span class="lead" style="background:' + (isPopup ? '#7B3FB5' : '#E8710A') + '">' + mi(isPopup ? 'article' : 'campaign') + '</span>';
@@ -593,8 +773,10 @@
     if (k === 'stats') { renderStats(); return; }
     if (!state.admin) { body.innerHTML = loadingBlock(); return; }
     var a = state.admin, h = '';
+    if (k === 'home') { renderHomeSettings(); return; }
     if (k === 'systems') h = addBtn('systems', 'เพิ่มระบบ') + listHtml('systems', a.systems);
     else if (k === 'banners') h = addBtn('banners', 'เพิ่มแบนเนอร์') + listHtml('banners', a.banners);
+    else if (k === 'contacts') h = addBtn('contacts', 'เพิ่มผู้ติดต่อ') + listHtml('contacts', a.contacts || []);
     else if (k === 'ann') h = addBtn('announcements', 'เพิ่มประกาศ') + listHtml('announcements', a.announcements);
     else if (k === 'docs') h = addBtn('documents', 'เพิ่มเอกสาร') + listHtml('documents', a.documents);
     else if (k === 'notif') {
@@ -671,6 +853,7 @@
   function renderCurrent() {
     if (state.view === 'docs') renderDocsView();
     else if (state.view === 'search') renderSearchView();
+    else if (state.view === 'contact') renderContactView();
     else if (state.view === 'notif') renderNotifView();
     else if (state.view === 'settings') renderSettingsView();
   }
@@ -684,16 +867,17 @@
   // ===== สลับหน้า =====
   function showView(name) {
     state.view = name;
-    ['home', 'docs', 'search', 'notif', 'settings', 'sub'].forEach(function (v) {
+    ['home', 'docs', 'search', 'contact', 'notif', 'settings', 'sub'].forEach(function (v) {
       $('view-' + v).classList.toggle('active', v === name);
     });
-    var navKey = name === 'sub' ? 'settings' : name;
+    var navKey = name === 'sub' ? 'settings' : name;      // หน้าแจ้งเตือนเปิดจากกระดิ่ง ไม่มีปุ่มในเมนูล่าง
     var btns = document.querySelectorAll('#bottomNav .nav-b');
     for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-view') === navKey);
     window.scrollTo(0, 0);
-    if (name === 'home') { renderHome(); startBannerTimer(); }
+    if (name === 'home') { renderHome(); startBannerTimer(); tickClock(true); }
     if (name === 'docs') renderDocsView();
     if (name === 'search') renderSearchView();
+    if (name === 'contact') renderContactView();
     if (name === 'notif') { renderNotifView(); logEvent('view_notification', ''); }
     if (name === 'settings') renderSettingsView();
   }
@@ -706,40 +890,123 @@
   }
   function showSub(key) {
     state.sub = key;
+    if (key === 'home') state.homeDraft = null;      // เข้าหน้าตั้งค่าหน้าแรกใหม่ทุกครั้ง เริ่มจากค่าที่บันทึกไว้
     $('subTitle').textContent = SUB_TITLES[key];
     showView('sub');
     if (key === 'stats') { loadStats(); return; }
     renderSub();
-    adminApi('getAdminData').then(function (snap) { state.admin = snap; renderSub(); }).catch(handleError);
+    adminApi('getAdminData').then(function (snap) {
+      state.admin = snap;
+      if (key === 'home' && state.homeDraft && !state.homeDraft.dirty) state.homeDraft = null;   // ยังไม่ได้แก้อะไร → ใช้ค่าล่าสุดจากหลังบ้าน
+      renderSub();
+    }).catch(handleError);
   }
 
-  // ===== โหมด admin =====
+  // ===== โหมด admin: แป้น PIN ตัวเลข =====
+  /**
+   * แป้นกดตัวเลข (modal) ไม่ auto-submit เพราะฝั่งหน้าเว็บไม่รู้ความยาวรหัส ต้องกดปุ่ม "เข้าสู่ระบบ" (หรือ Enter) เมื่อกดอย่างน้อย 4 หลัก
+   * เลขที่กดเก็บในตัวแปร digits ในฟังก์ชันนี้เท่านั้น (ไม่ใส่ใน DOM) จุดบนหัวนับจำนวนหลักโดยไม่แสดงตัวเลข
+   */
   function openPinModal(afterLogin) {
-    var m = openModal({
-      title: 'เข้าโหมด admin', icon: 'lock', overlayClose: true, focus: '.pin-input',
-      body: '<p class="muted" style="margin-bottom:12px">กรุณาใส่รหัส PIN เพื่อจัดการระบบ</p><input class="pin-input" type="password" inputmode="numeric" autocomplete="off" maxlength="12" aria-label="รหัส PIN">',
-      actions: [
-        { label: 'ยกเลิก', cls: 'btn-outline', onClick: function (h) { h.close(); } },
-        {
-          label: 'เข้าสู่โหมด admin', icon: 'login', cls: 'btn-primary', primary: true,
-          onClick: function (h) {
-            var pin = h.body.querySelector('.pin-input').value.trim();
-            if (!pin) { toast('กรุณาใส่รหัส PIN', 'error'); return; }
-            return api('verifyAdminPin', pin).then(function (r) {
-              state.token = r.token;
-              ssSet(TOKEN_KEY, r.token);
-              h.close();
-              renderAll();
-              toast('เข้าสู่โหมด admin แล้ว', 'success');
-              if (afterLogin) afterLogin();
-            });
-          }
-        }
-      ]
+    var digits = [];
+    var busy = false;
+    var box = document.createElement('div');
+    box.className = 'modal pin-modal';
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-modal', 'true');
+    box.setAttribute('aria-label', 'เข้าโหมด admin');
+    box.tabIndex = -1;
+    var pad = '';
+    for (var n = 1; n <= 9; n++) pad += '<button type="button" class="pk" data-pin="d" data-d="' + n + '" aria-label="เลข ' + n + '">' + n + '</button>';
+    pad += '<button type="button" class="pk pk-text" data-pin="cancel" aria-label="ยกเลิก">ยกเลิก</button>' +
+      '<button type="button" class="pk" data-pin="d" data-d="0" aria-label="เลข 0">0</button>' +
+      '<button type="button" class="pk pk-icon" data-pin="back" aria-label="ลบหลักล่าสุด">' + mi('backspace') + '</button>';
+    box.innerHTML = '<div class="pin-head"><button type="button" class="m-x" data-pin="close" aria-label="ปิด">' + mi('close') + '</button>' +
+      '<div class="pin-key">' + mi('vpn_key') + '</div><h3>เข้าโหมด admin</h3><p class="pin-sub">กดรหัส PIN</p>' +
+      '<div class="pin-dots" data-pin-dots></div><span class="sr-only" aria-live="polite" data-pin-sr></span></div>' +
+      '<div class="pin-pad">' + pad + '</div>' +
+      '<div class="pin-foot"><button type="button" class="btn btn-primary btn-block" data-pin="submit" disabled>' + mi('login') + '<span>เข้าสู่ระบบ</span></button></div>';
+    var dotsEl = box.querySelector('[data-pin-dots]');
+    var srEl = box.querySelector('[data-pin-sr]');
+    var submitBtn = box.querySelector('[data-pin="submit"]');
+
+    function syncSubmit() {
+      submitBtn.disabled = busy || digits.length < PIN_MIN;
+      srEl.textContent = digits.length ? 'กดแล้ว ' + digits.length + ' หลัก' : '';
+    }
+    function press(d) {
+      if (busy || digits.length >= PIN_MAX) return;
+      digits.push(d);
+      var dot = document.createElement('span');
+      dot.className = 'pin-dot';
+      dotsEl.appendChild(dot);
+      syncSubmit();
+    }
+    function back() {
+      if (busy || !digits.length) return;
+      digits.pop();
+      if (dotsEl.lastChild) dotsEl.removeChild(dotsEl.lastChild);
+      syncSubmit();
+    }
+    function clearAll() {
+      digits.length = 0;
+      dotsEl.innerHTML = '';
+      syncSubmit();
+    }
+    function shake() {
+      dotsEl.classList.remove('shake');
+      void dotsEl.offsetWidth;                 // เริ่ม animation ใหม่ได้แม้สั่นติดกัน
+      dotsEl.classList.add('shake');
+    }
+    function submit() {
+      if (busy || digits.length < PIN_MIN) return;
+      busy = true;
+      submitBtn.disabled = true;
+      submitBtn.classList.add('is-loading');
+      function done() { busy = false; submitBtn.classList.remove('is-loading'); syncSubmit(); }
+      api('verifyAdminPin', digits.join('')).then(function (r) {
+        state.token = r.token;
+        ssSet(TOKEN_KEY, r.token);
+        digits.length = 0;
+        done();
+        handle.close();
+        renderAll();
+        toast('เข้าสู่โหมด admin แล้ว', 'success');
+        if (afterLogin) afterLogin();
+      }, function (err) {
+        clearAll();
+        shake();
+        done();
+        handleError(err);                      // แสดงข้อความจาก server เช่น "รหัส PIN ไม่ถูกต้อง"
+      });
+    }
+    function onKey(e) {
+      if (modalStack[modalStack.length - 1] !== handle) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (/^[0-9]$/.test(e.key)) { e.preventDefault(); press(e.key); }
+      else if (e.key === 'Backspace') { e.preventDefault(); back(); }
+      else if (e.key === 'Enter') {
+        // ปุ่มอื่นที่โฟกัสอยู่ (เช่น ลบ/ยกเลิก) ทำงานของมันเอง แต่ปุ่มตัวเลข (.pk) ให้ Enter = ยืนยันรหัส ไม่ใช่เพิ่มตัวเลข
+        if (e.target && e.target.tagName === 'BUTTON' && !e.target.classList.contains('pk')) return;
+        e.preventDefault();
+        submit();
+      }
+    }
+    var handle = mountOverlay(box, {
+      overlayClose: true,
+      onClose: function () { document.removeEventListener('keydown', onKey); digits.length = 0; }
     });
-    m.body.querySelector('.pin-input').addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && m.primaryBtn) m.primaryBtn.click();
+    document.addEventListener('keydown', onKey);
+    box.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('[data-pin]') : null;
+      if (!b || b.disabled) return;
+      var act = b.getAttribute('data-pin');
+      if (act === 'd') press(b.getAttribute('data-d'));
+      else if (act === 'back') back();
+      else if (act === 'submit') submit();
+      else if (act === 'cancel' || act === 'close') handle.close();
     });
+    setTimeout(function () { box.focus(); }, 30);
   }
   function clearAdmin() {
     state.token = '';
@@ -765,9 +1032,8 @@
     }).catch(function (err) {
       if (window.console) console.error(err);
       if (!state.data) {
-        $('sysGrid').innerHTML = '<div class="empty" style="grid-column:1/-1">' + mi('cloud_off') + 'โหลดข้อมูลไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต<br><br>' +
+        $('sysGrid').innerHTML = '<div class="empty" style="grid-column:1/-1;border:0">' + mi('cloud_off') + 'โหลดข้อมูลไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต<br><br>' +
           '<button class="btn btn-primary" data-act="retry-load">' + mi('refresh') + '<span>ลองใหม่</span></button></div>';
-        $('recentDocs').innerHTML = '';
       } else {
         if (!state.offlineToastShown) { state.offlineToastShown = true; toast('เชื่อมต่อไม่ได้ กำลังแสดงข้อมูลล่าสุดที่บันทึกไว้', 'info', 3500); }
         maybeShowPopup();
@@ -827,14 +1093,14 @@
       return '<button type="button" class="ic-b" data-icon="' + ic + '" aria-label="ไอคอน ' + ic + '">' + mi(ic) + '</button>';
     }).join('') + '</div>';
   }
-  function bindPicker(root, selector, attr, initial) {
+  function bindPicker(root, selector, attr, initial, onChange) {
     var cur = initial;
     var btns = root.querySelectorAll(selector);
     function paint() {
       for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('sel', btns[i].getAttribute(attr) === cur);
     }
     for (var i = 0; i < btns.length; i++) {
-      btns[i].addEventListener('click', function () { cur = this.getAttribute(attr); paint(); });
+      btns[i].addEventListener('click', function () { cur = this.getAttribute(attr); paint(); if (onChange) onChange(cur); });
     }
     paint();
     return function () { return cur; };
@@ -847,17 +1113,60 @@
     return true;
   }
 
+  /** ตารางเลือกสี: (ปุ่ม "เริ่มต้น" ถ้า withDefault) + ชุดสีสำเร็จรูป + ช่องกำหนดเอง (input type=color) */
+  function colorPickerHtml(palette, withDefault) {
+    var h = '<div class="color-grid">';
+    if (withDefault) h += '<button type="button" class="col-b col-def" data-color="" aria-label="สีเริ่มต้น"><span class="col-def-t">เริ่มต้น</span></button>';
+    palette.forEach(function (c) {
+      h += '<button type="button" class="col-b" data-color="' + c + '" style="background:' + c + '" aria-label="สี ' + c + '">' + mi('check') + '</button>';
+    });
+    h += '<label class="col-b col-custom" aria-label="กำหนดสีเอง"><input type="color" class="cp-input" value="#1a4fa8" aria-label="กำหนดสีเอง">' + mi('palette') + '</label></div>';
+    return h;
+  }
+  /** ผูกตารางเลือกสี คืน {get, set}; onChange(สี) ถูกเรียกเมื่อผู้ใช้เปลี่ยน */
+  function bindColorGrid(root, initial, onChange) {
+    var cur = safeHex(initial);
+    var btns = root.querySelectorAll('.col-b[data-color]');
+    var custom = root.querySelector('.col-custom');
+    var input = root.querySelector('.cp-input');
+    function paint() {
+      var matched = false;
+      for (var i = 0; i < btns.length; i++) {
+        var on = safeHex(btns[i].getAttribute('data-color')) === cur;
+        if (btns[i].getAttribute('data-color') === '' && cur === '') on = true;
+        btns[i].classList.toggle('sel', on);
+        if (on) matched = true;
+      }
+      custom.classList.toggle('sel', !!cur && !matched);
+      custom.style.background = cur && !matched ? cur : '';
+      if (cur) input.value = cur.toLowerCase();
+    }
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener('click', function () { cur = safeHex(this.getAttribute('data-color')); paint(); if (onChange) onChange(cur); });
+    }
+    input.addEventListener('input', function () { cur = safeHex(input.value); paint(); if (onChange) onChange(cur); });
+    paint();
+    return { get: function () { return cur; }, set: function (v) { cur = safeHex(v); paint(); } };
+  }
+
   function openSystemForm(id) {
     var s = id && state.admin ? findIn(state.admin.systems, id) : null;
     var cats = {};
     ((state.admin && state.admin.systems) || (state.data && state.data.systems) || []).forEach(function (x) { if (x.category) cats[x.category] = 1; });
+    var count = state.admin && state.admin.systems ? state.admin.systems.length : 0;
+    var iconFileId = s ? safeFileId(s.iconFileId) : '';     // รูปไอคอนที่บันทึกไว้
+    var newIcon = null;                                     // รูปไอคอนที่เพิ่งเลือกในรอบนี้ {dataUrl, base64, mime}
     var m = openModal({
       title: s ? 'แก้ไขระบบ' : 'เพิ่มระบบ', icon: 'apps', focus: '[name=name]',
       body: fieldInput('ชื่อระบบ *', 'name', { max: 60, ph: 'เช่น ระบบอาวุธปืน' }) +
         fieldInput('คำอธิบายสั้น', 'desc', { max: 120 }) +
         fieldInput('ลิงค์ระบบ (ขึ้นต้น https://)', 'url', { type: 'url', max: 2000, ph: 'https://', inputmode: 'url' }) +
-        '<div class="fld"><span>เลือกไอคอน</span>' + iconGridHtml() + '</div>' +
-        '<div class="fld"><span>เลือกสี</span>' + colorGridHtml() + '</div>' +
+        '<div class="fld"><span>สีพื้นวงกลม</span>' + colorPickerHtml(PALETTE, false) + '</div>' +
+        '<div class="fld"><span>ไอคอน</span><div class="prev-row"><span class="ls" id="sfPrev"></span><div class="hint" style="margin:0">ตัวอย่างบนหน้าแรก</div></div>' +
+        '<div class="img-acts"><button type="button" class="btn btn-outline" data-pick="1">' + mi('upload') + '<span>อัปโหลดไอคอน</span></button>' +
+        '<button type="button" class="btn btn-outline" data-clear="1">' + mi('delete') + '<span>ลบรูปไอคอน</span></button></div>' +
+        '<input type="file" accept="image/*" hidden name="iconFile"><div class="hint">อัปโหลดรูปเอง (ระบบย่อเป็น 256 พิกเซลให้) หรือเลือกไอคอนจากชุดด้านล่าง การเลือกจากชุดจะใช้แทนรูปที่อัปโหลด</div>' +
+        '<div style="height:10px"></div>' + iconGridHtml() + '</div>' +
         fieldInput('หมวดหมู่', 'category', { max: 40, list: 'catList' }) +
         '<datalist id="catList">' + Object.keys(cats).map(function (c) { return '<option value="' + esc(c) + '">'; }).join('') + '</datalist>' +
         '<label class="sw-row"><input type="checkbox" name="visible" checked><span>แสดงบนหน้าหลัก</span></label>',
@@ -870,26 +1179,63 @@
             var name = getVal(b, 'name'), url = getVal(b, 'url');
             if (!name) { toast('กรุณากรอกชื่อระบบ', 'error'); return; }
             if (!needHttps(url, 'ลิงค์ระบบ')) return;
-            return adminApi('saveSystem', {
-              id: s ? s.id : '', name: name, desc: getVal(b, 'desc'), url: url, icon: pickIcon(), color: pickColor(),
-              category: getVal(b, 'category'), visible: getChk(b, 'visible')
+            var uploadedId = '';     // รหัสไฟล์ที่เพิ่งอัปโหลดในรอบนี้ (ใช้ยกเลิกถ้าบันทึกไม่สำเร็จ)
+            var step = Promise.resolve(iconFileId);
+            if (newIcon) {
+              step = adminApi('uploadImage', newIcon.base64, newIcon.mime, 'icon').then(function (r) {
+                uploadedId = r.fileId;
+                if (r.shareWarning) toast(SHARE_WARN_MSG, 'error', 5000);
+                return r.fileId;
+              });
+            }
+            return step.then(function (fileId) {
+              var bg = colorCp.get() || PALETTE[0];
+              return adminApi('saveSystem', {
+                id: s ? s.id : '', name: name, desc: getVal(b, 'desc'), url: url, icon: pickIcon(), color: bg, iconBg: bg, iconFileId: fileId || '',
+                category: getVal(b, 'category'), visible: getChk(b, 'visible')
+              });
+            }).catch(function (err) {
+              if (uploadedId) api('discardUpload', state.token, uploadedId).catch(function () {});   // บันทึกไม่สำเร็จ → เก็บกวาดรูปที่เพิ่งอัปโหลด
+              throw err;
             }).then(function (snap) { applySnapshot(snap); toast('บันทึกระบบเรียบร้อย', 'success'); h.close(); });
           }
         }
       ]
     });
     var b = m.body;
-    var pickIcon = bindPicker(b, '.ic-b', 'data-icon', s ? s.icon : ICON_CHOICES[0]);
-    var pickColor = bindPicker(b, '.col-b', 'data-color', s ? safeColor(s.color) : COLOR_CHOICES[0]);
+    var prev = b.querySelector('#sfPrev');
+    var fileInput = b.querySelector('[name=iconFile]');
+    function paintPrev() {
+      prev.style.setProperty('--c', colorCp.get() || PALETTE[0]);
+      prev.innerHTML = newIcon ? '<img class="ls-img" src="' + newIcon.dataUrl + '" alt="">' : sysGlyph(pickIcon(), iconFileId);
+    }
+    var pickIcon = bindPicker(b, '.ic-b', 'data-icon', s ? s.icon : ICON_CHOICES[0], function () {
+      newIcon = null; iconFileId = '';      // เลือกไอคอนจากชุด = เลิกใช้รูปที่อัปโหลด
+      paintPrev();
+    });
+    var colorCp = bindColorGrid(b, s ? sysBg(s) : PALETTE[count % PALETTE.length], paintPrev);
     if (s) {
       setVal(b, 'name', s.name); setVal(b, 'desc', s.desc); setVal(b, 'url', s.url); setVal(b, 'category', s.category);
       b.querySelector('[name=visible]').checked = !!s.visible;
     }
+    paintPrev();
+    b.querySelector('[data-pick]').addEventListener('click', function () { fileInput.click(); });
+    b.querySelector('[data-clear]').addEventListener('click', function () { newIcon = null; iconFileId = ''; fileInput.value = ''; paintPrev(); });
+    fileInput.addEventListener('change', function () {
+      var f = fileInput.files && fileInput.files[0];
+      if (!f) return;
+      fileInput.value = '';   // ล้างค่า เพื่อให้เลือกไฟล์เดิมซ้ำได้
+      shrinkImage(f, { max: 256, quality: 0.85, keepPng: true }).then(function (r) { newIcon = r; paintPrev(); toast('ย่อรูปเรียบร้อย', 'success', 1500); }).catch(handleError);
+    });
   }
 
   var SHARE_WARN_MSG = 'แชร์ไฟล์สาธารณะไม่ได้ ผู้ใช้ทั่วไปอาจเปิดไม่ได้';
-  function shrinkImage(file) {
-    return readFileDataUrl(file).then(function (url) { return shrinkLoaded(url); });
+  /**
+   * ย่อรูปก่อนอัปโหลด (ประหยัดพื้นที่ Drive) opts = {max: ด้านยาวสุด(พิกเซล) ค่าเริ่มต้น 800, quality: 0-1 ค่าเริ่มต้น 0.7, keepPng: true = ไฟล์ PNG คงเป็น PNG (รักษาพื้นโปร่งใส)}
+   * คืน {dataUrl, base64, mime}
+   */
+  function shrinkImage(file, opts) {
+    return readFileDataUrl(file).then(function (url) { return shrinkLoaded(url, opts, file.type); });
   }
   function readFileDataUrl(file) {
     return new Promise(function (resolve, reject) {
@@ -899,21 +1245,23 @@
       fr.readAsDataURL(file);
     });
   }
-  function shrinkLoaded(url) {
+  function shrinkLoaded(url, opts, srcType) {
+    opts = opts || {};
     return new Promise(function (resolve, reject) {
       var img = new Image();
       img.onload = function () {
-        var max = 800;
+        var max = opts.max || 800;
+        var png = !!opts.keepPng && srcType === 'image/png';
         var sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
         var cw = Math.max(1, Math.round(img.naturalWidth * sc)), ch = Math.max(1, Math.round(img.naturalHeight * sc));
         var cv = document.createElement('canvas');
         cv.width = cw; cv.height = ch;
         var cx = cv.getContext('2d');
-        cx.fillStyle = '#ffffff';
-        cx.fillRect(0, 0, cw, ch);
+        if (!png) { cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, cw, ch); }
         cx.drawImage(img, 0, 0, cw, ch);
-        var dataUrl = cv.toDataURL('image/jpeg', 0.7);
-        resolve({ dataUrl: dataUrl, base64: dataUrl.split(',')[1], mime: 'image/jpeg' });
+        var mime = png ? 'image/png' : 'image/jpeg';
+        var dataUrl = png ? cv.toDataURL('image/png') : cv.toDataURL('image/jpeg', opts.quality || 0.7);
+        resolve({ dataUrl: dataUrl, base64: dataUrl.split(',')[1], mime: mime });
       };
       img.onerror = function () { reject(new Error('เปิดรูปไม่ได้ กรุณาเลือกไฟล์รูป JPG หรือ PNG')); };
       img.src = url;
@@ -937,10 +1285,12 @@
       body: fieldInput('หัวข้อ *', 'title', { max: 60 }) + fieldInput('ข้อความรอง', 'subtitle', { max: 120 }) +
         fieldInput('ลิงค์เมื่อแตะ (ไม่บังคับ)', 'linkUrl', { type: 'url', max: 2000, ph: 'https://', inputmode: 'url' }) +
         '<div class="fld"><span>สีพื้น</span>' + colorGridHtml() + '</div>' +
-        '<div class="fld"><span>รูปภาพ (ไม่บังคับ)</span><div class="img-prev" id="imgPrev">' + mi('image') + '</div>' +
+        '<div class="fld"><span>รูปภาพ (ไม่บังคับ)</span><div class="img-prev" id="imgPrev"></div>' +
         '<div class="img-acts"><button type="button" class="btn btn-outline" data-pick="1">' + mi('upload') + '<span>เลือกรูป</span></button>' +
         '<button type="button" class="btn btn-outline" data-clear="1">' + mi('delete') + '<span>เอารูปออก</span></button></div>' +
         '<input type="file" accept="image/*" hidden name="imgFile"><div class="hint">ระบบจะย่อรูปให้อัตโนมัติ (ไม่เกิน 800 พิกเซล) ก่อนอัปโหลด</div></div>' +
+        '<div class="fld"><span>ความเข้มแผ่นสีทับรูป</span><div class="rng-row"><input type="range" class="rng" name="overlay" min="0" max="90" step="1" value="' + BANNER_DEFAULT_OVERLAY + '" aria-label="ความเข้มแผ่นสีทับรูป"><span class="rng-val" data-ovv></span></div>' +
+        '<div class="hint">ใช้สีพื้นที่เลือกทับบนรูป ช่วยให้ตัวอักษรอ่านง่าย (0 = ไม่ทับ, 90 = ทึบมาก)</div></div>' +
         '<label class="sw-row"><input type="checkbox" name="visible" checked><span>แสดงบนหน้าหลัก</span></label>',
       actions: [
         { label: 'ยกเลิก', cls: 'btn-outline', onClick: function (h) { h.close(); } },
@@ -963,7 +1313,7 @@
             return step.then(function (fileId) {
               return adminApi('saveBanner', {
                 id: bn ? bn.id : '', title: title, subtitle: getVal(b, 'subtitle'), linkUrl: link,
-                color: pickColor(), imageFileId: fileId || '', visible: getChk(b, 'visible')
+                color: pickColor(), imageFileId: fileId || '', overlay: getVal(b, 'overlay'), visible: getChk(b, 'visible')
               });
             }).catch(function (err) {
               // บันทึกแบนเนอร์ไม่สำเร็จ → เก็บกวาดรูปที่อัปโหลดไปแล้วเบื้องหลัง
@@ -975,19 +1325,27 @@
       ]
     });
     var b = m.body;
-    var pickColor = bindPicker(b, '.col-b', 'data-color', bn ? safeColor(bn.color) : COLOR_CHOICES[0]);
     var prev = b.querySelector('#imgPrev');
     var fileInput = b.querySelector('[name=imgFile]');
+    var rng = b.querySelector('[name=overlay]');
+    var ovv = b.querySelector('[data-ovv]');
     function paintPrev() {
       var src = newImage ? newImage.dataUrl : (!removeImage && bn && bn.imageFileId ? driveImg(bn.imageFileId) : '');
-      if (src) { prev.style.backgroundImage = "url('" + src + "')"; prev.innerHTML = ''; }
-      else { prev.style.backgroundImage = ''; prev.innerHTML = mi('image'); }
+      var col = pickColor() || COLOR_CHOICES[0];
+      ovv.textContent = rng.value + '%';
+      if (src) {
+        prev.style.backgroundImage = "url('" + src + "')";
+        prev.innerHTML = '<span class="ov-layer" style="background:' + col + ';opacity:' + (overlayPct(rng.value, BANNER_DEFAULT_OVERLAY) / 100) + '"></span>';
+      } else { prev.style.backgroundImage = ''; prev.innerHTML = mi('image'); }
     }
+    var pickColor = bindPicker(b, '.col-b', 'data-color', bn ? safeColor(bn.color) : COLOR_CHOICES[0], paintPrev);
     if (bn) {
       setVal(b, 'title', bn.title); setVal(b, 'subtitle', bn.subtitle); setVal(b, 'linkUrl', bn.linkUrl);
+      rng.value = overlayPct(bn.overlay, BANNER_DEFAULT_OVERLAY);
       b.querySelector('[name=visible]').checked = !!bn.visible;
     }
     paintPrev();
+    rng.addEventListener('input', paintPrev);
     b.querySelector('[data-pick]').addEventListener('click', function () { fileInput.click(); });
     b.querySelector('[data-clear]').addEventListener('click', function () { newImage = null; removeImage = true; fileInput.value = ''; paintPrev(); });
     fileInput.addEventListener('change', function () {
@@ -1135,7 +1493,151 @@
     paintMode();
   }
 
-  var FORM_OPENERS = { systems: openSystemForm, banners: openBannerForm, announcements: openAnnouncementForm, documents: openDocumentForm };
+  function openContactForm(id) {
+    var c = id && state.admin ? findIn(state.admin.contacts || [], id) : null;
+    var m = openModal({
+      title: c ? 'แก้ไขผู้ติดต่อ' : 'เพิ่มผู้ติดต่อ', icon: 'contacts', focus: '[name=name]',
+      body: fieldInput('ชื่อ *', 'name', { max: 60, ph: 'เช่น พ.ต.อ. สมชาย ใจดี' }) +
+        fieldInput('ตำแหน่ง / หน่วย', 'position', { max: 80, ph: 'เช่น ผกก.ฝอ.3' }) +
+        fieldInput('เบอร์โทร', 'phone', { type: 'tel', max: 20, ph: 'เช่น 081-234-5678', inputmode: 'tel' }) +
+        fieldInput('ลิงค์ LINE (ขึ้นต้น https://line.me/)', 'line', { type: 'url', max: 300, ph: 'https://line.me/ti/p/...', inputmode: 'url' }) +
+        '<div class="hint" style="margin:-6px 0 12px">ต้องกรอกเบอร์โทรหรือลิงค์ LINE อย่างน้อย 1 อย่าง</div>' +
+        '<label class="sw-row"><input type="checkbox" name="visible" checked><span>แสดงในหน้าติดต่อ</span></label>',
+      actions: [
+        { label: 'ยกเลิก', cls: 'btn-outline', onClick: function (h) { h.close(); } },
+        {
+          label: 'บันทึก', icon: 'save', cls: 'btn-primary',
+          onClick: function (h) {
+            var b = h.body;
+            var name = getVal(b, 'name'), phone = getVal(b, 'phone'), line = getVal(b, 'line');
+            if (!name) { toast('กรุณากรอกชื่อผู้ติดต่อ', 'error'); return; }
+            if (phone && (!/^\+?[0-9][0-9\- ]*$/.test(phone) || phone.replace(/[^0-9]/g, '').length < 3)) {
+              toast('เบอร์โทรใส่ได้เฉพาะตัวเลข ขีด ช่องว่าง และ + (ถ้ามีต้องอยู่หน้าสุด)', 'error', 4500); return;
+            }
+            if (line && !/^https:\/\/line\.me\/[^\s<>"']+$/i.test(line)) { toast('ลิงค์ LINE ต้องขึ้นต้นด้วย https://line.me/ และห้ามมีช่องว่าง', 'error', 4500); return; }
+            if (!phone && !line) { toast('กรุณากรอกเบอร์โทรหรือลิงค์ LINE อย่างน้อย 1 อย่าง', 'error', 4000); return; }
+            return adminApi('saveContact', {
+              id: c ? c.id : '', name: name, position: getVal(b, 'position'), phone: phone, line: line, visible: getChk(b, 'visible')
+            }).then(function (snap) { applySnapshot(snap); toast('บันทึกผู้ติดต่อเรียบร้อย', 'success'); h.close(); });
+          }
+        }
+      ]
+    });
+    var b = m.body;
+    if (c) {
+      setVal(b, 'name', c.name); setVal(b, 'position', c.position); setVal(b, 'phone', c.phone); setVal(b, 'line', c.line);
+      b.querySelector('[name=visible]').checked = !!c.visible;
+    }
+  }
+
+  // ===== ตั้งค่า: โลโก้และหน้าแรก =====
+  var homeCp = null;      // ตัวเลือกสีของการ์ดวันที่ (สร้างใหม่ทุกครั้งที่วาดหน้า)
+  function newHomeDraft(home) {
+    home = home || {};
+    return {
+      dirty: false,
+      logoFileId: safeFileId(home.logoFileId), logoNew: null,       // logoNew = {dataUrl, base64, mime} รูปที่เพิ่งเลือก ยังไม่อัปโหลด
+      heroFileId: safeFileId(home.heroFileId), heroNew: null,
+      heroBg: safeHex(home.heroBg),
+      heroOverlay: overlayPct(home.heroOverlay, HERO_DEFAULT_OVERLAY),
+      heroText: home.heroText === 'light' ? 'light' : 'dark'
+    };
+  }
+  function homeHeroCfg(d) {
+    return { bg: d.heroBg, imgSrc: d.heroNew ? d.heroNew.dataUrl : (d.heroFileId ? driveImg(d.heroFileId, 800) : ''), overlay: d.heroOverlay, text: d.heroText };
+  }
+  function renderHomeSettings() {
+    var body = $('subBody');
+    if (!state.admin) { body.innerHTML = loadingBlock(); return; }
+    if (!state.homeDraft) state.homeDraft = newHomeDraft(state.admin.home);
+    var d = state.homeDraft;
+    body.innerHTML =
+      '<div class="form-card"><h3 class="sec-title">โลโก้</h3>' +
+      '<div class="prev-row"><span class="logo-prev" id="hsLogo"></span><div class="hint" style="margin:0">แสดงแทนไอคอนโล่ที่มุมซ้ายบนของทุกหน้า</div></div>' +
+      '<div class="img-acts"><button type="button" class="btn btn-outline" data-act="hs-logo-pick">' + mi('upload') + '<span>เลือกรูปโลโก้</span></button>' +
+      '<button type="button" class="btn btn-outline" data-act="hs-logo-clear">' + mi('delete') + '<span>ลบโลโก้</span></button></div>' +
+      '<input type="file" accept="image/*" hidden id="hsLogoFile"><div class="hint">ระบบจะย่อรูปเป็น 256 พิกเซลให้อัตโนมัติ</div></div>' +
+      '<div class="form-card"><h3 class="sec-title">การ์ดวันที่และเวลา</h3>' +
+      '<div id="hsHero" class="hero dark" aria-label="ตัวอย่างการ์ดวันที่และเวลา"></div>' +
+      '<div class="fld"><span>รูปพื้นหลัง (ไม่บังคับ)</span><div class="img-acts"><button type="button" class="btn btn-outline" data-act="hs-hero-pick">' + mi('upload') + '<span>เลือกรูป</span></button>' +
+      '<button type="button" class="btn btn-outline" data-act="hs-hero-clear">' + mi('delete') + '<span>เอารูปออก</span></button></div>' +
+      '<input type="file" accept="image/*" hidden id="hsHeroFile"><div class="hint">ระบบจะย่อรูปให้อัตโนมัติ (ไม่เกิน 800 พิกเซล) ก่อนอัปโหลด</div></div>' +
+      '<div class="fld"><span>สีพื้น</span>' + colorPickerHtml(HERO_SWATCHES, true) + '</div>' +
+      '<div class="fld"><span>ความเข้มแผ่นสีทับรูป</span><div class="rng-row"><input type="range" class="rng" id="hsOverlay" min="0" max="90" step="1" aria-label="ความเข้มแผ่นสีทับรูป"><span class="rng-val" id="hsOverlayVal"></span></div><div class="hint" id="hsOverlayHint"></div></div>' +
+      '<div class="fld"><span>สีตัวอักษร</span><div class="seg" style="margin-bottom:0"><button type="button" data-act="hs-text" data-text="dark">เข้ม</button><button type="button" data-act="hs-text" data-text="light">ขาว</button></div><div class="hint" id="hsTextHint"></div></div>' +
+      '<button type="button" class="btn btn-outline btn-block" data-act="hs-reset">' + mi('restart_alt') + '<span>คืนค่าเริ่มต้นการ์ดวันที่</span></button></div>' +
+      '<button type="button" class="btn btn-primary btn-block" data-act="hs-save">' + mi('save') + '<span>บันทึก</span></button>';
+    homeCp = bindColorGrid(body, d.heroBg, function (c) { d.heroBg = c; d.dirty = true; paintHomePrev(); });
+    $('hsOverlay').value = d.heroOverlay;
+    $('hsOverlay').addEventListener('input', function () { d.heroOverlay = overlayPct(this.value, HERO_DEFAULT_OVERLAY); d.dirty = true; paintHomePrev(); });
+    $('hsLogoFile').addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      this.value = '';
+      if (!f) return;
+      var dr = state.homeDraft || d;   // ใช้ฉบับร่างปัจจุบัน (ถ้าหน้าถูกวาดใหม่ระหว่างเลือกไฟล์ ตัวแปร d เดิมจะเป็นของเก่า)
+      dr.dirty = true;   // กันข้อมูลจากหลังบ้านมาล้างฉบับร่างระหว่างย่อรูป
+      shrinkImage(f, { max: 256, quality: 0.85, keepPng: true }).then(function (r) { dr.logoNew = r; dr.dirty = true; paintHomePrev(); toast('ย่อรูปเรียบร้อย', 'success', 1500); }).catch(handleError);
+    });
+    $('hsHeroFile').addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      this.value = '';
+      if (!f) return;
+      var dr = state.homeDraft || d;   // ใช้ฉบับร่างปัจจุบัน (กันกรณีหน้าถูกวาดใหม่ระหว่างเลือกไฟล์)
+      dr.dirty = true;   // กันข้อมูลจากหลังบ้านมาล้างฉบับร่างระหว่างย่อรูป
+      shrinkImage(f).then(function (r) { dr.heroNew = r; dr.dirty = true; paintHomePrev(); toast('ย่อรูปเรียบร้อย', 'success', 1500); }).catch(handleError);
+    });
+    paintHomePrev();
+  }
+  /** วาดตัวอย่างสดของโลโก้และการ์ดวันที่ตามค่าที่กำลังแก้ */
+  function paintHomePrev() {
+    var d = state.homeDraft;
+    if (!d || !$('hsHero')) return;
+    var logoSrc = d.logoNew ? d.logoNew.dataUrl : (d.logoFileId ? driveImg(d.logoFileId, 256) : '');
+    $('hsLogo').innerHTML = logoSrc ? '<img class="logo-img" src="' + logoSrc + '" alt="" data-icon="shield">' : mi('shield');
+    var cfg = homeHeroCfg(d);
+    applyHero($('hsHero'), cfg);
+    var hasImg = !!(d.heroNew || d.heroFileId);
+    var rng = $('hsOverlay');
+    rng.disabled = !hasImg;
+    $('hsOverlayVal').textContent = d.heroOverlay + '%';
+    $('hsOverlayHint').textContent = hasImg ? 'ใช้สีพื้นที่เลือกทับบนรูป (0 = ไม่ทับ, 90 = ทึบมาก)' : 'ใช้ได้เมื่อมีรูปพื้นหลัง';
+    var segs = document.querySelectorAll('[data-act="hs-text"]');
+    for (var i = 0; i < segs.length; i++) segs[i].classList.toggle('on', segs[i].getAttribute('data-text') === d.heroText);
+    $('hsTextHint').textContent = heroFlipped(cfg) ? 'สีที่เลือกอ่านยากบนพื้นนี้ ระบบจึงสลับเป็นอีกสีให้อัตโนมัติเพื่อให้อ่านออก' : 'ถ้าตัวอักษรอ่านยากบนรูป ให้เพิ่มความเข้มแผ่นสีหรือสลับสีตัวอักษร';
+  }
+  /** บันทึกค่าหน้าแรก: อัปโหลดรูปใหม่ก่อน (ผ่าน uploadImage เดิม) แล้วบันทึกค่า ถ้าพลาดเก็บกวาดรูปที่เพิ่งอัปโหลด */
+  function saveHomeDraft() {
+    var d = state.homeDraft;
+    if (!d) return Promise.resolve();
+    var uploaded = [];
+    function up(img, name) {
+      return adminApi('uploadImage', img.base64, img.mime, name).then(function (r) {
+        uploaded.push(r.fileId);
+        if (r.shareWarning) toast(SHARE_WARN_MSG, 'error', 5000);
+        return r.fileId;
+      });
+    }
+    var logoStep = d.logoNew ? up(d.logoNew, 'logo') : Promise.resolve(d.logoFileId);
+    return logoStep.then(function (logoId) {
+      var heroStep = d.heroNew ? up(d.heroNew, 'hero') : Promise.resolve(d.heroFileId);
+      return heroStep.then(function (heroId) {
+        var isDefault = !heroId && !d.heroBg && d.heroText === 'dark' && d.heroOverlay === HERO_DEFAULT_OVERLAY;   // ทุกอย่างเป็นค่าเริ่มต้น → ล้างค่าในชีต
+        return adminApi('saveHomeSettings', {
+          logoFileId: logoId || '', heroFileId: heroId || '', heroBg: d.heroBg || '',
+          heroOverlay: isDefault ? '' : String(d.heroOverlay), heroText: isDefault ? '' : d.heroText
+        });
+      });
+    }).catch(function (err) {
+      uploaded.forEach(function (id) { api('discardUpload', state.token, id).catch(function () {}); });
+      throw err;
+    }).then(function (snap) {
+      state.homeDraft = null;
+      applySnapshot(snap);
+      toast('บันทึกหน้าแรกเรียบร้อย', 'success');
+    });
+  }
+
+  var FORM_OPENERS = { systems: openSystemForm, banners: openBannerForm, contacts: openContactForm, announcements: openAnnouncementForm, documents: openDocumentForm };
 
   // ===== ตัวจัดการคลิกทั้งหมด (event delegation) =====
   var ACTIONS = {
@@ -1146,7 +1648,6 @@
       else openPinModal(function () { showView('settings'); });
     },
     'back': function () { showView('settings'); },
-    'docs-all': function () { showView('docs'); },
     'open-sys': function (el) { openSystem(el.getAttribute('data-id')); },
     'dl-doc': function (el) {
       runBusy(el, function () {
@@ -1182,7 +1683,7 @@
       var kind = el.getAttribute('data-kind'), id = el.getAttribute('data-id');
       var it = findIn(state.admin ? state.admin[kind] : [], id);
       var o = it ? rowInfo(kind, it) : { title: 'รายการนี้' };
-      var extra = (kind === 'banners' || kind === 'documents') ? '\nไฟล์ที่เกี่ยวข้องจะถูกย้ายไปถังขยะใน Drive' : '';
+      var extra = (kind === 'banners' || kind === 'documents' || kind === 'systems') ? '\nไฟล์ที่เกี่ยวข้องจะถูกย้ายไปถังขยะใน Drive' : '';
       confirmDialog('ยืนยันการลบ', 'ต้องการลบ "' + o.title + '" ใช่ไหม?\nลบแล้วจะไม่แสดงในระบบอีก' + extra, 'ลบ').then(function (ok) {
         if (!ok) return;
         runBusy(el, function () {
@@ -1201,6 +1702,30 @@
         });
       });
     },
+    // ----- ตั้งค่าหน้าแรก (hs = home settings) -----
+    'hs-logo-pick': function () { var f = $('hsLogoFile'); if (f) f.click(); },
+    'hs-logo-clear': function () {
+      var d = state.homeDraft; if (!d) return;
+      d.logoNew = null; d.logoFileId = ''; d.dirty = true; paintHomePrev();
+    },
+    'hs-hero-pick': function () { var f = $('hsHeroFile'); if (f) f.click(); },
+    'hs-hero-clear': function () {
+      var d = state.homeDraft; if (!d) return;
+      d.heroNew = null; d.heroFileId = ''; d.dirty = true; paintHomePrev();
+    },
+    'hs-text': function (el) {
+      var d = state.homeDraft; if (!d) return;
+      d.heroText = el.getAttribute('data-text') === 'light' ? 'light' : 'dark'; d.dirty = true; paintHomePrev();
+    },
+    'hs-reset': function () {
+      var d = state.homeDraft; if (!d) return;
+      d.heroNew = null; d.heroFileId = ''; d.heroBg = ''; d.heroOverlay = HERO_DEFAULT_OVERLAY; d.heroText = 'dark'; d.dirty = true;
+      if (homeCp) homeCp.set('');
+      $('hsOverlay').value = d.heroOverlay;
+      paintHomePrev();
+      toast('คืนค่าเริ่มต้นแล้ว กดบันทึกเพื่อใช้งานจริง', 'info', 3000);
+    },
+    'hs-save': function (el) { runBusy(el, saveHomeDraft); },
     'stats-range': function (el) { state.statsDays = +el.getAttribute('data-days'); loadStats(); },
     'stats-reload': function () { loadStats(); }
   };
@@ -1278,7 +1803,11 @@
     calendar: 'M4 5h16v15H4zM4 10h16M8 3v4M16 3v4',
     people: 'M9 11a3 3 0 100-6 3 3 0 000 6zM3 20c0-3.5 2.5-5.5 6-5.5s6 2 6 5.5M16 6a3 3 0 010 5M17 15c2.5.5 4 2.3 4 5',
     gavel: 'M5 21h9M8 17l8-8M12 5l7 7M10 7l5-4 6 6-4 5z',
-    circle: 'M12 4a8 8 0 100 16 8 8 0 000-16z'
+    circle: 'M12 4a8 8 0 100 16 8 8 0 000-16z',
+    phone: 'M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A15 15 0 013 6a2 2 0 012-2z',
+    chat: 'M4 5h16v11H9l-5 4zM8 9h8M8 12h5',
+    backspace: 'M9 5h11v14H9l-6-7zM12 9l5 6M17 9l-5 6',
+    palette: 'M12 3a9 9 0 100 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a3 3 0 003-3c0-5-4-11-8-11zM7.5 11.5h.01M10.5 7.5h.01M15 8h.01'
   };
   // ชื่อไอคอนของฟอนต์ -> ชื่อรูปใน SVG_PATHS (ตัวที่ไม่อยู่ในรายการใช้รูปวงกลมแทน)
   var SVG_ALIAS = {
@@ -1290,7 +1819,8 @@
     local_police: 'shield', security: 'shield', policy: 'shield', badge: 'person', fingerprint: 'person',
     description: 'doc', article: 'doc', assignment: 'doc', picture_as_pdf: 'doc', table_chart: 'doc', slideshow: 'doc',
     inventory_2: 'inbox', view_carousel: 'carousel', insights: 'chart', bar_chart: 'chart', check_box_outline_blank: 'box_empty',
-    location_on: 'pin', calendar_month: 'calendar', groups: 'people'
+    location_on: 'pin', calendar_month: 'calendar', groups: 'people',
+    call: 'phone', contact_phone: 'phone', contacts: 'people', restart_alt: 'refresh', dashboard_customize: 'home', add_photo_alternate: 'image', check_box: 'check'
   };
   // สร้างรหัส SVG ของไอคอนตามชื่อ (ใช้ได้กับทุกชื่อที่ผ่าน safeIcon)
   function iconSvg(name) {
@@ -1346,6 +1876,16 @@
     setTimeout(fallback, 3000);   // เกิน 3 วินาทียังไม่พร้อม ใช้ SVG สำรอง
   }
 
+  // ===== รูปที่โหลดไม่ขึ้น (เช่น ไฟล์ยังไม่ได้แชร์) → กลับไปใช้ไอคอนสำรอง =====
+  document.addEventListener('error', function (e) {
+    var t = e.target;
+    if (!t || t.tagName !== 'IMG' || !t.hasAttribute('data-icon')) return;
+    var span = document.createElement('span');
+    span.className = 'mi';
+    span.textContent = safeIcon(t.getAttribute('data-icon'));
+    if (t.parentNode) t.parentNode.replaceChild(span, t);
+  }, true);
+
   // ===== เริ่มทำงาน =====
   function boot() {
     watchIconFont();
@@ -1359,6 +1899,10 @@
     track.addEventListener('pointerdown', function () { startBannerTimer(); });
     $('searchInput').addEventListener('input', debounce(renderSearchView, 250));
     $('docSearch').addEventListener('input', debounce(renderDocsView, 250));
+
+    // นาฬิกา: เดินทุกวินาทีด้วย setInterval ตัวเดียว หยุดเมื่อแท็บถูกซ่อน กลับมาเดินต่อเมื่อแท็บแสดงอีกครั้ง
+    document.addEventListener('visibilitychange', function () { if (document.hidden) stopClock(); else startClock(); });
+    if (!document.hidden) startClock();
 
     // แสดงข้อมูลจาก cache (localStorage) ทันที แล้วโหลดใหม่เบื้องหลังเพียงครั้งเดียวตอนเปิดแอป
     // (การสลับหน้ากลับมาหน้าแรกไม่ยิง getPublicData ซ้ำ จึงไม่ต้องมี throttle เพิ่ม)
