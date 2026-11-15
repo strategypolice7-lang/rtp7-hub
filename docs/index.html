@@ -22,7 +22,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" rel="stylesheet">
 <style>
-/* ===== ค่าพื้นฐาน / สี (ธีมน้ำเงิน-เหลือง ดีไซน์ v3.0) ===== */
+/* ===== ค่าพื้นฐาน / สี (ธีมน้ำเงิน-เหลือง ดีไซน์ v3.0 / v3.1 เพิ่มป้ายวงกลมและปฏิทินภารกิจ) ===== */
 :root{
   --hdr:#0D2B6B; --pri:#1A4FA8; --pri-soft:#DCEBFA;
   --txt:#0D2B6B; --mut:#5B6F86; --line:#CFE0F1;
@@ -97,6 +97,9 @@ html.icons-fallback .mi{width:1em;height:1em;overflow:visible}
 .hero-time{display:flex;align-items:baseline;gap:4px;color:var(--hero-fg);margin-top:2px}
 .hero-hm{font-size:52px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
 .hero-sec{font-size:18px;font-weight:500;color:var(--hero-sub);font-variant-numeric:tabular-nums}
+/* การ์ดวันที่หน้าแรกแตะเพื่อเปิดปฏิทินภารกิจได้ (ไอคอนปฏิทินมุมขวาล่างบอกใบ้) */
+.hero[data-act]{cursor:pointer}
+.hero-cal{position:absolute;right:14px;bottom:12px;font-size:28px;color:var(--hero-fg);opacity:.75;pointer-events:none}
 
 /* ===== ข้อความวิ่ง ===== */
 .ticker{display:flex;align-items:center;gap:8px;background:#FFF6CC;color:#0D2B6B;border-radius:12px;padding:0 12px;height:44px;margin-bottom:12px;overflow:hidden}
@@ -143,6 +146,12 @@ html.icons-fallback .mi{width:1em;height:1em;overflow:visible}
 .sys-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:4px 2px;min-height:96px;border-radius:12px;text-align:center}
 .sys-ico{width:58px;height:58px;transition:transform .15s ease}
 .sys-item:active .sys-ico{transform:scale(.98)}
+/* ช่องไอคอนสูง/กว้างเท่ากันทุกระบบ (70px = วงกลม 58 + ช่องว่าง 3 + วงแหวน 3 ทั้งสองข้าง) ไอคอนที่ไม่มีป้ายจึงอยู่แนวเดียวกัน */
+.sys-slot{position:relative;width:70px;height:70px;display:flex;align-items:center;justify-content:center;flex:none}
+/* วงแหวนสีของป้าย หนา 3px รอบวงกลมไอคอน (เว้นช่องว่างโดยวงกลม 58px อยู่ในช่อง 70px) */
+.sys-ring{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;border:3px solid var(--bc,#E5484D);pointer-events:none}
+/* ป้ายข้อความมุมขวาบน พื้นสีเดียวกับวงแหวน ขอบขาว 2px ตัวอักษร 12px ขึ้นไป (สีตัวอักษรสลับเป็นกรมท่าเมื่อพื้นสว่างจนขาวอ่านยาก) */
+.sys-badge{position:absolute;right:-10px;top:-4px;max-width:84px;height:24px;padding:0 8px;border-radius:12px;background:var(--bc,#E5484D);color:var(--bt,#fff);border:2px solid #fff;font-size:12px;font-weight:600;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .sys-ico .mi{font-size:30px}
 .sys-lbl{font-size:12px;line-height:1.3;font-weight:500;color:var(--txt);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em;overflow-wrap:anywhere;width:100%}
 .sys-item.nolink .sys-lbl{color:var(--mut)}
@@ -208,6 +217,7 @@ button.row:active{background:#F2F8FE;transform:scale(.98)}
 .dot{width:10px;height:10px;border-radius:50%;background:#D93025;flex:none}
 .n-card p{margin-top:6px;white-space:pre-wrap;overflow-wrap:anywhere}
 .n-card time{display:block;margin-top:8px;font-size:12px;color:var(--mut)}
+.m-t .dot{display:inline-block;margin-right:6px;vertical-align:middle}
 
 /* ===== ตั้งค่า / admin ===== */
 .admin-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
@@ -236,7 +246,7 @@ button.row:active{background:#F2F8FE;transform:scale(.98)}
 .form-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(13,43,107,.08)}
 .seg{display:flex;gap:8px;margin-bottom:14px}
 .seg button{flex:1;min-height:48px;border-radius:12px;border:1px solid #B7C9E4;background:#fff;font-weight:500;text-align:center}
-.seg button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.seg button.on,.seg button.sel{background:var(--pri);color:#fff;border-color:var(--pri)}
 /* ปุ่มเลือกช่วงวันที่หน้าสถิติอยู่บนพื้นน้ำเงิน ใช้สีเหลืองบอกตัวที่เลือก */
 #subBody>.seg button.on{background:var(--yel);color:#0D2B6B;border-color:var(--yel)}
 .hint{font-size:13px;color:var(--mut);margin-top:4px}
@@ -260,8 +270,76 @@ button.row:active{background:#F2F8FE;transform:scale(.98)}
 .skel{background:#E3ECF7;border-radius:12px;animation:pulse 1.2s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .skel-grid-item{display:flex;flex-direction:column;align-items:center;gap:8px}
-.skel-circle{width:58px;height:58px;border-radius:50%}
+.skel-circle{width:58px;height:58px;border-radius:50%;margin:6px 0}
 .skel-line{width:48px;height:12px}
+
+/* ===== ภารกิจใกล้ถึง (การ์ดหน้าแรก / หน้าแจ้งเตือน) ===== */
+.mission-card{margin-bottom:12px;padding-bottom:6px}
+.mission-card .card-head{padding:6px 6px 0 16px}
+.link-btn{display:inline-flex;align-items:center;gap:2px;min-height:48px;padding:0 6px 0 12px;border-radius:12px;color:var(--pri);font-weight:600;font-size:15px}
+.link-btn .mi{font-size:22px}
+.m-list{padding:0 10px 6px}
+.m-row{display:flex;align-items:center;gap:10px;width:100%;min-height:60px;padding:8px 10px;margin-bottom:6px;border-radius:12px;background:#F7FAFE;border-left:4px solid var(--mc,#1A4FA8);transition:transform .15s ease}
+.m-row:active{transform:scale(.98)}
+/* ป้ายวัน: วันนี้ = แดงอ่อน, พรุ่งนี้ = ฟ้าอ่อน, อื่นๆ = วันที่สั้น */
+.m-day{flex:none;min-width:64px;height:30px;padding:0 8px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;background:#F2F5F9;color:#5B6F86;white-space:nowrap}
+.m-day.today{background:#FFF3F3;color:#E5484D}
+.m-day.tmr{background:#E6F0FF;color:#1A4FA8}
+.m-txt{flex:1;min-width:0}
+.m-t{display:block;font-weight:600;font-size:16px;line-height:1.35;overflow-wrap:anywhere}
+.m-s{display:block;font-size:13px;color:var(--mut);overflow-wrap:anywhere}
+.m-lock{font-size:18px;color:var(--mut)}
+.m-sec{margin-bottom:14px}
+.m-sec .m-list{padding:0 10px 10px}
+
+/* ===== หน้าปฏิทินภารกิจ ===== */
+#view-cal .sub-bar h2{flex:1}
+.cal-today-btn{min-height:48px;padding:0 14px;border-radius:14px;background:#fff;color:var(--pri);font-weight:600;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none;transition:transform .15s ease}
+.cal-today-btn:active{transform:scale(.98)}
+.cal-card{padding:8px 4px 6px;margin-bottom:12px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 4px}
+.cal-nav{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--pri);background:#F2F8FE;flex:none;transition:transform .15s ease}
+.cal-nav:active{transform:scale(.98)}
+.cal-title{flex:1;text-align:center;font-size:18px;font-weight:600;color:var(--txt)}
+.cal-dow,.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.cal-dow{text-align:center;font-size:13px;font-weight:600;color:var(--mut);padding:4px 0 2px}
+.cal-dow span:first-child{color:#D93025}
+.cal-grid{gap:2px 0}
+.cal-cell{min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;padding:4px 0 2px;border-radius:12px;font-size:16px;font-weight:500;color:var(--txt);border:2px solid transparent;background:transparent}
+.cal-cell.blank{pointer-events:none}
+.cal-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1}
+.cal-cell.today .cal-num{background:var(--pri);color:#fff;font-weight:600}
+.cal-cell.sel{border-color:var(--pri);background:var(--pri-soft)}
+.cal-dots{display:flex;gap:3px;height:8px;justify-content:center}
+.cal-dots i{display:block;width:8px;height:8px;border-radius:50%;background:var(--mc,#1A4FA8);box-shadow:0 0 0 1px rgba(13,43,107,.25)}
+.cal-day-card{padding:12px 0 6px;margin-bottom:12px}
+.cal-day-card h3{font-size:18px;font-weight:600;padding:0 16px 8px;color:var(--txt)}
+.cm-item{display:flex;gap:10px;margin:0 12px 10px;padding:10px 12px;border-radius:12px;background:#F7FAFE;border-left:4px solid var(--mc,#1A4FA8)}
+.cm-time{flex:none;min-width:58px;font-weight:600;font-size:15px;color:var(--pri);font-variant-numeric:tabular-nums}
+.cm-body{flex:1;min-width:0}
+.cm-t{font-weight:600;font-size:16px;line-height:1.35;overflow-wrap:anywhere}
+.cm-meta{display:flex;align-items:flex-start;gap:6px;margin-top:2px;font-size:14px;color:var(--mut);overflow-wrap:anywhere}
+.cm-meta .mi{font-size:18px;margin-top:1px}
+.cm-detail{margin-top:6px;font-size:15px;white-space:pre-wrap;overflow-wrap:anywhere}
+.cm-chip{display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:0 8px;border-radius:10px;background:#E6EEF8;color:var(--pri);font-size:12px;font-weight:500}
+.cm-chip .mi{font-size:14px}
+.cal-hint{padding:0 16px 10px;font-size:13px;color:var(--mut)}
+/* ฟอร์มภารกิจ / ป้าย: ช่องวันที่ (วัน เดือน ปี พ.ศ.) และเวลา (ชั่วโมง.นาที 24 ชม.) แบบเลือกจากรายการ */
+.date-fld{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.5fr) minmax(0,1fr);gap:8px}
+.date-fld select.inp,.time-fld select.inp{padding:10px 6px}
+.time-fld{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center}
+.time-sep{font-weight:600;font-size:20px}
+.fld-acts{display:flex;gap:8px;margin-top:8px}
+.fld-acts .btn{min-height:48px;flex:1}
+.seg.seg-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.warn-box{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;padding:10px 12px;border-radius:12px;background:#FFF4D6;border:1px solid #F1D58A;color:#6B4A00;font-size:14px}
+.warn-box .mi{color:#B26A00}
+.badge-prev{display:flex;align-items:center;gap:14px;margin:4px 0 10px}
+.cal-month-bar{display:flex;align-items:center;justify-content:space-between;gap:6px}
+@media (max-width:380px){
+  /* จอแคบ: ขยายการ์ดปฏิทินออกข้างละ 8px เพื่อให้ช่องวันกว้างถึง 48px */
+  .cal-card{margin-left:-8px;margin-right:-8px}
+}
 
 /* ===== bottom nav (fixed) พื้นขาว ===== */
 #bottomNav{position:fixed;left:0;right:0;bottom:0;z-index:40;background:#fff;border-top:1px solid #E1E9F4;padding-bottom:env(safe-area-inset-bottom)}
@@ -401,7 +479,7 @@ textarea.inp{min-height:110px;resize:vertical}
       <!-- หน้าหลัก -->
       <section id="view-home" class="view active">
         <!-- การ์ดวัน/วันที่/นาฬิกา: JS เติมเนื้อหาและสีตามค่าที่ admin ตั้ง -->
-        <div id="heroHome" class="hero dark" aria-label="วันและเวลาปัจจุบัน"></div>
+        <div id="heroHome" class="hero dark" data-act="open-cal" role="button" tabindex="0" aria-label="วันและเวลาปัจจุบัน แตะเพื่อเปิดปฏิทินภารกิจ"></div>
         <div id="ticker" class="ticker" hidden>
           <span class="mi">campaign</span>
           <div class="tk-view"><div class="tk-run" id="tickerRun"></div></div>
@@ -409,6 +487,11 @@ textarea.inp{min-height:110px;resize:vertical}
         <div id="bannerWrap" class="banner-wrap" hidden>
           <div id="bannerTrack" class="banner-track"></div>
           <div id="bannerDots" class="banner-dots"></div>
+        </div>
+        <!-- ภารกิจใกล้ถึง: ซ่อนทั้งใบเมื่อไม่มีภารกิจ (JS เติมรายการ) -->
+        <div id="missionCard" class="card mission-card" hidden>
+          <div class="card-head"><h2>ภารกิจใกล้ถึง</h2><button type="button" class="link-btn" data-act="open-cal"><span>ปฏิทิน</span><span class="mi">chevron_right</span></button></div>
+          <div id="missionList" class="m-list"></div>
         </div>
         <div class="card sys-card">
           <div class="card-head"><h2>ระบบงาน</h2></div>
@@ -435,6 +518,16 @@ textarea.inp{min-height:110px;resize:vertical}
       <section id="view-contact" class="view">
         <h2 class="sec-title">ติดต่อ</h2>
         <div id="contactList"></div>
+      </section>
+
+      <!-- ปฏิทินภารกิจ (เปิดจากการ์ดภารกิจ / แตะการ์ดวันที่) -->
+      <section id="view-cal" class="view">
+        <div class="sub-bar">
+          <button class="back-btn" data-act="cal-back" aria-label="ย้อนกลับ"><span class="mi">arrow_back</span></button>
+          <h2>ปฏิทินภารกิจ</h2>
+          <button type="button" class="cal-today-btn" data-act="cal-today"><span class="mi">today</span><span>วันนี้</span></button>
+        </div>
+        <div id="calBody"></div>
       </section>
 
       <!-- แจ้งเตือน (เปิดจากกระดิ่งบน header) -->
@@ -473,8 +566,8 @@ textarea.inp{min-height:110px;resize:vertical}
 <div id="modalRoot"></div>
 <div id="toastRoot" aria-live="polite"></div>
 
-<!-- ?v=3.0 กันมือถือค้างไฟล์เก่า (เปลี่ยนเลขเมื่อออกเวอร์ชันใหม่) -->
-<script src="config.js?v=3.0"></script>
-<script src="app.js?v=3.0"></script>
+<!-- ?v=3.1 กันมือถือค้างไฟล์เก่า (เปลี่ยนเลขเมื่อออกเวอร์ชันใหม่) -->
+<script src="config.js?v=3.1"></script>
+<script src="app.js?v=3.1"></script>
 </body>
 </html>
