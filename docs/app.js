@@ -14,6 +14,12 @@
   var COLOR_CHOICES = ['#185FA5', '#0F9D58', '#E8710A', '#D93025', '#7B3FB5', '#00838F', '#C2185B', '#5D4037'];   // สีพื้นแบนเนอร์
   var PALETTE = ['#F6B93B', '#EF6F6C', '#4FC1C8', '#1F5F7A', '#1A4FA8', '#2E9E5B'];                              // ชุดสีวงกลมไอคอนระบบ (ระบบเดิมที่ไม่มีสีใช้วนตามลำดับ)
   var HERO_SWATCHES = ['#FFD400', '#FFE35C', '#F6B93B', '#EF6F6C', '#4FC1C8', '#1A4FA8', '#0D2B6B', '#FFFFFF'];  // ชุดสีการ์ดวันที่/เวลา
+  var BADGE_COLORS = ['#E5484D', '#2E9E5B', '#F6B93B', '#1A4FA8'];                                               // สีวงกลมป้ายของระบบ (แดง เขียว เหลือง น้ำเงิน) + กำหนดเอง
+  var BADGE_TEXTS = ['ใหม่', 'อัปเดต', 'ด่วน'];                                                                 // ปุ่มเลือกข้อความป้ายด่วน
+  var BADGE_COLOR_DEFAULT = '#E5484D';
+  var MISSION_COLORS = ['#1A4FA8', '#E5484D', '#2E9E5B', '#F6B93B', '#7B3FB5', '#00838F', '#E8710A'];            // สีภารกิจในปฏิทิน
+  var MISSION_COLOR_DEFAULT = '#1A4FA8';
+  var MISSION_CATS = ['ประชุม', 'ปฏิบัติการ', 'กิจกรรม', 'อื่นๆ'];
   var NO_LINK_BG = '#AEB9C9';            // วงเทาของระบบที่ยังไม่มีลิงค์
   var HERO_DEFAULT_BG = '#FFD400';
   var HERO_DEFAULT_OVERLAY = 35;         // ความเข้มแผ่นสีทับรูป hero เมื่อยังไม่เคยตั้ง
@@ -21,12 +27,15 @@
   var TH_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
   var TH_MONTHS_FULL = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
   var TH_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+  var TH_DAYS_SHORT = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
   var CACHE_KEY = 'rpt_pub_cache_v3';
   var READ_KEY = 'rpt_read_ids_v1';
+  var MISSION_SEEN_KEY = 'missions_seen_v2';   // ภารกิจใกล้ถึงที่เคยเห็นแล้ว (เก็บ id -> วันที่ภารกิจ) ใช้นับตัวเลขบนกระดิ่ง; เก็บเฉพาะภารกิจสาธารณะ (v2)
+  var MISSION_SEEN_KEY_OLD = 'missions_seen_v1';   // คีย์เก่า (v1 เคยเก็บ id ภารกิจ admin ด้วย) → ลบทิ้งตอนเปิดแอป
   var TOKEN_KEY = 'rpt_admin_token';
   var PIN_MIN = 4, PIN_MAX = 12;         // แป้น PIN: ต้องกดอย่างน้อย 4 หลักถึงกดเข้าสู่ระบบได้, สูงสุด 12 หลัก
-  var SUB_TITLES = { home: 'โลโก้และหน้าแรก', systems: 'จัดการระบบ', banners: 'การ์ดแบนเนอร์', contacts: 'ข้อมูลติดต่อ', ann: 'ข้อความวิ่ง และ popup ประกาศ', notif: 'ส่งแจ้งเตือนกระดิ่ง', docs: 'เอกสารดาวน์โหลด', stats: 'สถิติการใช้งาน' };
-  var DELETE_FN = { systems: 'deleteSystem', banners: 'deleteBanner', contacts: 'deleteContact', announcements: 'deleteAnnouncement', notifications: 'deleteNotification', documents: 'deleteDocument' };
+  var SUB_TITLES = { home: 'โลโก้และหน้าแรก', systems: 'จัดการระบบ', banners: 'การ์ดแบนเนอร์', contacts: 'ข้อมูลติดต่อ', ann: 'ข้อความวิ่ง และ popup ประกาศ', notif: 'ส่งแจ้งเตือนกระดิ่ง', missions: 'ปฏิทินภารกิจ', docs: 'เอกสารดาวน์โหลด', stats: 'สถิติการใช้งาน' };
+  var DELETE_FN = { systems: 'deleteSystem', banners: 'deleteBanner', contacts: 'deleteContact', announcements: 'deleteAnnouncement', notifications: 'deleteNotification', documents: 'deleteDocument', missions: 'deleteMission' };
   var MENU = [
     { key: 'home', icon: 'dashboard_customize', title: 'โลโก้และหน้าแรก' },
     { key: 'systems', icon: 'apps', title: 'จัดการระบบ' },
@@ -34,6 +43,7 @@
     { key: 'contacts', icon: 'contacts', title: 'ข้อมูลติดต่อ' },
     { key: 'ann', icon: 'campaign', title: 'ข้อความวิ่ง และ popup ประกาศ' },
     { key: 'notif', icon: 'notifications_active', title: 'ส่งแจ้งเตือนกระดิ่ง' },
+    { key: 'missions', icon: 'event', title: 'ปฏิทินภารกิจ' },
     { key: 'docs', icon: 'folder_open', title: 'เอกสารดาวน์โหลด' },
     { key: 'stats', icon: 'insights', title: 'สถิติการใช้งาน' }
   ];
@@ -42,7 +52,9 @@
     data: null, admin: null, token: '', view: 'home', sub: '',
     bannerIdx: 0, bannerTimer: null, bannerSig: '', tickerSig: '', heroSig: '', clockTimer: null, homeDraft: null,
     popupShown: false, statsDays: 30, statsData: null, statsSeq: 0, statsError: false,
-    offlineToastShown: false, configError: ''
+    offlineToastShown: false, configError: '',
+    seenAdmin: {},   // ภารกิจ admin ที่เห็นแล้ว เก็บในหน่วยความจำเท่านั้น (ไม่ลง localStorage กัน id รั่วบนเครื่อง)
+    cal: null, calFrom: 'home', mFilter: null, todayKey: ''     // ปฏิทินภารกิจ: เดือนที่เปิด/หน้าที่มา/เดือนที่กรองในหน้า admin/วันที่ (ไทย) ล่าสุดที่นาฬิกาเห็น
   };
 
   // ===== ตัวช่วยพื้นฐาน =====
@@ -64,6 +76,7 @@
   var KEY_PREFIX = 'rtp7hub_';
   function lsGet(k) { try { return window.localStorage.getItem(KEY_PREFIX + k); } catch (e) { return null; } }
   function lsSet(k, v) { try { window.localStorage.setItem(KEY_PREFIX + k, v); } catch (e) { /* ไม่เป็นไร */ } }
+  function lsDel(k) { try { window.localStorage.removeItem(KEY_PREFIX + k); } catch (e) { /* ไม่เป็นไร */ } }
   function ssGet(k) { try { return window.sessionStorage.getItem(KEY_PREFIX + k); } catch (e) { return null; } }
   function ssSet(k, v) { try { window.sessionStorage.setItem(KEY_PREFIX + k, v); } catch (e) { /* ไม่เป็นไร */ } }
   function ssDel(k) { try { window.sessionStorage.removeItem(KEY_PREFIX + k); } catch (e) { /* ไม่เป็นไร */ } }
@@ -79,10 +92,6 @@
     return out;
   }
   function fmtNum(n) { return String(Number(n) || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
-  function localDateKey() {
-    var d = new Date();
-    return d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2) + ('0' + d.getDate()).slice(-2);
-  }
   function deviceType() {
     return (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768) ? 'mobile' : 'desktop';
   }
@@ -110,6 +119,49 @@
     if (isNaN(n)) return def;
     return Math.max(0, Math.min(90, Math.round(n)));
   }
+
+  // ===== วันที่/เวลาตามเขตเวลาไทย (Asia/Bangkok = UTC+7 ไม่มีเวลาออมแสง) =====
+  // คำนวณจากเวลา UTC + 7 ชั่วโมงเสมอ ไม่ใช้เขตเวลาของเครื่อง เพื่อให้คำว่า "วันนี้" ตรงกับ server ทุกเครื่อง
+  var BKK_OFFSET_MS = 7 * 3600000;
+  function bkkParts(ms) {
+    var d = new Date((ms === undefined ? Date.now() : ms) + BKK_OFFSET_MS);
+    return { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate(), dow: d.getUTCDay(), hh: d.getUTCHours(), mi: d.getUTCMinutes(), ss: d.getUTCSeconds() };
+  }
+  function dateKey(y, m, d) { return y + '-' + ('0' + m).slice(-2) + '-' + ('0' + d).slice(-2); }
+  function todayKey() { var p = bkkParts(); return dateKey(p.y, p.m, p.d); }
+  function parseKey(k) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(k || ''));
+    return m ? { y: +m[1], m: +m[2], d: +m[3] } : null;
+  }
+  /** true = ข้อความ yyyy-MM-dd เป็นวันที่จริง (ปี ค.ศ. 2000-2100) */
+  function isRealKey(k) {
+    var p = parseKey(k);
+    if (!p || p.y < 2000 || p.y > 2100) return false;
+    var t = new Date(Date.UTC(p.y, p.m - 1, p.d));
+    return t.getUTCFullYear() === p.y && t.getUTCMonth() === p.m - 1 && t.getUTCDate() === p.d;
+  }
+  function shiftKey(k, n) {
+    var p = parseKey(k);
+    var t = new Date(Date.UTC(p.y, p.m - 1, p.d) + n * 86400000);
+    return dateKey(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate());
+  }
+  function dowOfKey(k) { var p = parseKey(k); return new Date(Date.UTC(p.y, p.m - 1, p.d)).getUTCDay(); }
+  function daysInMonth(y, m) { return new Date(Date.UTC(y, m, 0)).getUTCDate(); }
+  /** วันที่แบบสั้นไม่มีปี เช่น 17 พ.ย. */
+  function fmtDayShort(k) { var p = parseKey(k); return p ? p.d + ' ' + TH_MONTHS[p.m - 1] : ''; }
+  /** วันที่เต็มแบบไทย เช่น วันศุกร์ที่ 13 พฤศจิกายน 2569 */
+  function fmtDayLong(k) {
+    var p = parseKey(k);
+    return p ? 'วัน' + TH_DAYS[dowOfKey(k)] + 'ที่ ' + p.d + ' ' + TH_MONTHS_FULL[p.m - 1] + ' ' + (p.y + 543) : '';
+  }
+  /** ป้ายวันของภารกิจ: วันนี้ / พรุ่งนี้ / วันที่สั้น */
+  function dayLabel(k, today) {
+    if (k === today) return { text: 'วันนี้', cls: 'today' };
+    if (k === shiftKey(today, 1)) return { text: 'พรุ่งนี้', cls: 'tmr' };
+    return { text: fmtDayShort(k), cls: '' };
+  }
+  /** เวลาภารกิจแบบไทย 09.30 น. (ไม่ระบุเวลา = ทั้งวัน) */
+  function timeText(t) { return /^\d{2}:\d{2}$/.test(t || '') ? t.replace(':', '.') + ' น.' : 'ทั้งวัน'; }
 
   // ----- สี: ผสม / ความสว่าง / อัตราส่วนความต่างสี (ใช้ให้ตัวอักษรอ่านออกเสมอ) -----
   function hexToRgb(h) {
@@ -312,7 +364,11 @@
       });
       box.appendChild(foot);
     }
-    if (opts.focus) { var f = body.querySelector(opts.focus); if (f) setTimeout(function () { f.focus(); }, 60); }
+    if (opts.focus) {
+      var f = body.querySelector(opts.focus);
+      // โฟกัสช่องแรกเฉพาะเมื่อผู้ใช้ยังไม่ได้โฟกัสช่องอื่นในฟอร์ม/modal นี้ (กันแย่งโฟกัสตอนกำลังพิมพ์)
+      if (f) setTimeout(function () { if (!box.contains(document.activeElement) || document.activeElement === box) f.focus(); }, 60);
+    }
     return handle;
   }
   document.addEventListener('keydown', function (e) {
@@ -408,11 +464,98 @@
     var read = getReadMap();
     return state.data.notifications.filter(function (n) { return !read[n.id]; }).length;
   }
+  /** ตัวเลขบนกระดิ่ง = แจ้งเตือนที่ยังไม่อ่าน + ภารกิจใกล้ถึงที่ยังไม่เคยเห็น */
   function updateBadges() {
-    var c = unreadCount();
+    var c = unreadCount() + unseenMissions().length;
     var el = $('bellBadge');
     el.textContent = c > 9 ? '9+' : String(c);
     el.hidden = c === 0;
+  }
+
+  // ===== ภารกิจ (ปฏิทินเตือนภารกิจ) =====
+  /** ทำความสะอาดภารกิจจากหลังบ้านก่อนนำไปแสดง (ค่าผิดรูปแบบ → ตัดทิ้ง/ใช้ค่าเริ่มต้น) adminOnly = เห็นเฉพาะ admin */
+  function cleanMission(m, adminOnly) {
+    if (!m || typeof m !== 'object' || !isRealKey(m.date)) return null;
+    return {
+      id: String(m.id == null ? '' : m.id), title: String(m.title == null ? '' : m.title), date: m.date,
+      time: /^([01]\d|2[0-3]):[0-5]\d$/.test(m.time || '') ? m.time : '',
+      place: String(m.place == null ? '' : m.place), owner: String(m.owner == null ? '' : m.owner),
+      category: MISSION_CATS.indexOf(m.category) >= 0 ? m.category : 'อื่นๆ',
+      color: safeHex(m.color) || MISSION_COLOR_DEFAULT, detail: String(m.detail == null ? '' : m.detail), adminOnly: !!adminOnly
+    };
+  }
+  function byDateTime(a, b) {
+    if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    if (a.time !== b.time) return a.time < b.time ? -1 : 1;
+    return 0;
+  }
+  /** ภารกิจทั้งหมดที่ผู้ใช้คนนี้ควรเห็น: ภารกิจสาธารณะ + (ถ้าอยู่โหมด admin) ภารกิจเฉพาะ admin ที่แสดงอยู่ */
+  function missionsAll() {
+    var map = Object.create(null), order = [], hidden = Object.create(null);
+    function put(m, adminOnly) {
+      var c = cleanMission(m, adminOnly);
+      if (!c || !c.id) return;
+      if (!map[c.id]) order.push(c.id);
+      map[c.id] = c;
+    }
+    ((state.data && state.data.missions) || []).forEach(function (m) { put(m, false); });
+    if (isAdmin() && state.admin && state.admin.missions) {
+      state.admin.missions.forEach(function (m) {
+        if (m && m.visible) put(m, m.visibility !== 'public');
+        else if (m) hidden[m.id] = true;                  // admin ซ่อนไปแล้ว (ข้อมูลสาธารณะอาจยังเป็นของเก่า) → ไม่แสดง
+      });
+    }
+    return order.filter(function (id) { return !hidden[id]; }).map(function (id) { return map[id]; }).sort(byDateTime);
+  }
+  /** จำนวนวันเตือนล่วงหน้า 1-7 (1 = วันนี้และพรุ่งนี้) */
+  function leadDays() {
+    var n = Number(isAdmin() && state.admin && state.admin.settings ? state.admin.settings.missionLeadDays : (state.data ? state.data.missionLeadDays : 1));
+    return n >= 1 && n <= 7 && Math.floor(n) === n ? n : 1;
+  }
+  /** ภารกิจตั้งแต่วันนี้ถึงวันนี้ + จำนวนวันเตือนล่วงหน้า เรียงวัน/เวลา */
+  function upcomingMissions() {
+    var t = todayKey(), end = shiftKey(t, leadDays());
+    return missionsAll().filter(function (m) { return m.date >= t && m.date <= end; });
+  }
+  function getSeenMissions() {
+    try {
+      var o = JSON.parse(lsGet(MISSION_SEEN_KEY) || '{}');
+      return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+    } catch (e) { return {}; }
+  }
+  function unseenMissions() {
+    var seen = getSeenMissions();
+    // ภารกิจ admin เช็กกับหน่วยความจำ, ภารกิจสาธารณะเช็กกับ localStorage
+    return upcomingMissions().filter(function (m) { return (m.adminOnly ? state.seenAdmin : seen)[m.id] !== m.date; });
+  }
+  /** จดว่าเห็นภารกิจใกล้ถึงแล้ว (เปิดหน้าแจ้งเตือน) เก็บเฉพาะรายการที่ยังไม่ผ่านวัน กันข้อมูลบวม */
+  function markMissionsSeen() {
+    var old = getSeenMissions(), today = todayKey(), next = {}, n = 0;
+    Object.keys(old).forEach(function (id) {
+      if (typeof old[id] === 'string' && old[id] >= today && n < 300) { next[id] = old[id]; n++; }
+    });
+    upcomingMissions().forEach(function (m) {
+      if (m.adminOnly) state.seenAdmin[m.id] = m.date;   // ภารกิจ admin ไม่ลงเครื่อง
+      else next[m.id] = m.date;
+    });
+    lsSet(MISSION_SEEN_KEY, JSON.stringify(next));
+  }
+  /** แถวภารกิจแบบย่อ (หน้าแรก/หน้าแจ้งเตือน) แตะแล้วเปิดปฏิทินที่วันนั้น */
+  function missionRowHtml(m, unseen) {
+    var lb = dayLabel(m.date, todayKey());
+    var sub = [timeText(m.time), m.place].filter(function (x) { return !!x; }).join(' · ');
+    return '<button type="button" class="m-row" style="--mc:' + m.color + '" data-act="cal-open" data-date="' + m.date + '">' +
+      '<span class="m-day' + (lb.cls ? ' ' + lb.cls : '') + '">' + esc(lb.text) + '</span>' +
+      '<span class="m-txt"><span class="m-t">' + (unseen ? '<span class="dot" aria-label="ใหม่"></span>' : '') + esc(m.title) + '</span><span class="m-s">' + esc(sub) + '</span></span>' +
+      (m.adminOnly ? '<span class="mi m-lock" role="img" aria-label="เฉพาะ admin">lock</span>' : '') + '</button>';
+  }
+  /** การ์ดขาว "ภารกิจใกล้ถึง" บนหน้าแรก (สูงสุด 3 รายการ) ไม่มีภารกิจ = ซ่อนทั้งใบ */
+  function renderMissionCard() {
+    var card = $('missionCard');
+    var list = upcomingMissions().slice(0, 3);
+    if (!list.length) { card.hidden = true; $('missionList').innerHTML = ''; return; }
+    card.hidden = false;
+    $('missionList').innerHTML = list.map(function (m) { return missionRowHtml(m, false); }).join('');
   }
 
   function renderTicker() {
@@ -508,6 +651,30 @@
     return id ? '<img class="ls-img" src="' + driveImg(id, 256) + '" alt="" data-icon="' + safeIcon(icon) + '" loading="lazy" decoding="async">' : mi(icon);
   }
 
+  // ----- ป้ายวงกลมรอบไอคอนระบบ -----
+  /** สร้างข้อมูลป้ายที่ใช้วาด: ตรวจสี #RRGGBB + ข้อความ ≤ 10 ตัว คืน null ถ้าไม่ควรแสดง (สีตัวอักษรสลับเป็นกรมท่าเมื่อพื้นสว่างจนขาวอ่านยาก) */
+  function makeBadge(text, color) {
+    var c = safeHex(color);
+    if (!c) return null;
+    var t = String(text == null ? '' : text).trim().slice(0, 10) || 'ใหม่';
+    return { text: t, color: c, textColor: contrastRatio('#FFFFFF', c) >= 3 ? '#FFFFFF' : '#0D2B6B' };
+  }
+  /** ป้ายที่ใช้แสดงจริงของระบบหนึ่ง: ต้องมีป้าย + ยังไม่หมดอายุตามวันที่ไทย (เช็คซ้ำฝั่งเครื่องกันข้อมูลแคชเก่า) */
+  function activeBadge(s) {
+    var b = s && s.badge;
+    if (!b || typeof b !== 'object') return null;
+    if (b.until) {
+      if (!isRealKey(b.until) || todayKey() > b.until) return null;
+    }
+    return makeBadge(b.text, b.color);
+  }
+  /** ช่องไอคอน 70px (ขนาดเท่ากันทุกระบบ): วงกลมไอคอน + (ถ้ามีป้าย) วงแหวนสี 3px และป้ายข้อความมุมขวาบน */
+  function sysSlotHtml(bg, glyphHtml, bd, extraCls) {
+    var st = bd ? ' style="--bc:' + bd.color + ';--bt:' + bd.textColor + '"' : '';
+    return '<span class="sys-slot"' + st + '><span class="ls sys-ico' + (extraCls ? ' ' + extraCls : '') + '" style="--c:' + bg + '">' + glyphHtml + '</span>' +
+      (bd ? '<span class="sys-ring"></span><span class="sys-badge">' + esc(bd.text) + '</span>' : '') + '</span>';
+  }
+
   function renderGrid() {
     var grid = $('sysGrid');
     if (!state.data && state.configError) {
@@ -523,12 +690,13 @@
     var html = '';
     state.data.systems.forEach(function (s) {
       var hasLink = !!safeUrl(s.url);
+      var bd = hasLink ? activeBadge(s) : null;               // ระบบที่ยังไม่มีลิงค์ไม่แสดงป้าย
       html += '<button class="sys-item' + (hasLink ? '' : ' nolink') + '" data-act="open-sys" data-id="' + esc(s.id) + '" title="' + esc(s.desc || s.name) + '">' +
-        '<span class="ls sys-ico" style="--c:' + (hasLink ? sysBg(s) : NO_LINK_BG) + '">' + sysGlyph(s.icon, s.iconFileId) + '</span><span class="sys-lbl">' + esc(s.name) + '</span>' +
+        sysSlotHtml(hasLink ? sysBg(s) : NO_LINK_BG, sysGlyph(s.icon, s.iconFileId), bd) + '<span class="sys-lbl">' + esc(s.name) + '</span>' +
         (hasLink ? '' : '<span class="sys-note">ยังไม่มีลิงค์</span>') + '</button>';
     });
     if (isAdmin()) {
-      html += '<button class="sys-item sys-add" data-act="add-sys-home"><span class="ls sys-ico">' + mi('add') + '</span><span class="sys-lbl">เพิ่มระบบ</span></button>';
+      html += '<button class="sys-item sys-add" data-act="add-sys-home"><span class="sys-slot"><span class="ls sys-ico">' + mi('add') + '</span></span><span class="sys-lbl">เพิ่มระบบ</span></button>';
     }
     if (!html) {
       html = '<div class="empty" style="grid-column:1/-1;border:0">' + mi('apps') + 'ยังไม่มีระบบให้แสดง</div>';
@@ -574,7 +742,8 @@
         '<div class="hero-ov" style="background:' + base + ';opacity:' + (overlayPct(cfg.overlay, HERO_DEFAULT_OVERLAY) / 100) + '"></div>';
     }
     html += '<div class="hero-in"><div class="hero-day" data-ck="day"></div><div class="hero-date" data-ck="date"></div>' +
-      '<div class="hero-time"><span class="hero-hm" data-ck="hm"></span><span class="hero-sec" data-ck="sec"></span></div></div>';
+      '<div class="hero-time"><span class="hero-hm" data-ck="hm"></span><span class="hero-sec" data-ck="sec"></span></div></div>' +
+      (el.id === 'heroHome' ? mi('calendar_month', 'hero-cal') : '');     // การ์ดหน้าแรกแตะเปิดปฏิทินได้ (ตัวอย่างในตั้งค่าไม่มีไอคอน)
     el.className = 'hero ' + heroTextMode(cfg) + (img ? ' has-img' : '');
     el.style.background = cfg.bg && !img ? 'linear-gradient(120deg,' + cfg.bg + ',' + mixHex(cfg.bg, '#FFFFFF', 0.3) + ')' : '';
     el.innerHTML = html;
@@ -590,20 +759,34 @@
 
   // ----- นาฬิกา: setInterval ตัวเดียว หยุดเมื่อแท็บถูกซ่อน กลับมาเดินต่อเมื่อแท็บแสดง -----
   function two(n) { return ('0' + n).slice(-2); }
-  function clockParts(d) {
+  /** ข้อความนาฬิกาตามเวลาไทย (ไม่ขึ้นกับเขตเวลาของเครื่อง) เพื่อให้ตรงกับคำว่า "วันนี้" ของภารกิจ */
+  function clockParts(ms) {
+    var p = bkkParts(ms);
     return {
-      day: 'วัน' + TH_DAYS[d.getDay()] + 'ที่',
-      date: d.getDate() + ' ' + TH_MONTHS_FULL[d.getMonth()] + ' ' + (d.getFullYear() + 543),
-      hm: two(d.getHours()) + ':' + two(d.getMinutes()),
-      sec: ':' + two(d.getSeconds()) + ' น.'
+      day: 'วัน' + TH_DAYS[p.dow] + 'ที่',
+      date: p.d + ' ' + TH_MONTHS_FULL[p.m - 1] + ' ' + (p.y + 543),
+      hm: two(p.hh) + ':' + two(p.mi),
+      sec: ':' + two(p.ss) + ' น.'
     };
   }
+  /** ข้ามเที่ยงคืน (เวลาไทย) ขณะเปิดแอปค้างไว้: วาดภารกิจ/ป้าย/ปฏิทินใหม่ให้ตรงวันใหม่ */
+  var dayChanging = false;
+  function checkDayChange() {
+    var tk = todayKey();
+    if (state.todayKey === tk) return;
+    var first = state.todayKey === '';
+    state.todayKey = tk;
+    if (first || dayChanging) return;
+    dayChanging = true;
+    try { renderAll(); } finally { dayChanging = false; }
+  }
   function tickClock(force) {
+    checkDayChange();
     // เฉพาะตอนที่หน้าแรก (หรือหน้าตัวอย่างในตั้งค่าหน้าแรก) แสดงอยู่ เพื่อไม่เปลืองแรงเครื่อง
     if (!force && state.view !== 'home' && !(state.view === 'sub' && state.sub === 'home')) return;
     var els = document.querySelectorAll('[data-ck]');
     if (!els.length) return;
-    var p = clockParts(new Date());
+    var p = clockParts();
     for (var i = 0; i < els.length; i++) {
       var v = p[els[i].getAttribute('data-ck')];
       if (v !== undefined && els[i].textContent !== v) els[i].textContent = v;
@@ -622,6 +805,7 @@
     renderHero();
     renderTicker();
     renderBanners();
+    renderMissionCard();
     renderGrid();
     renderVersion();
   }
@@ -678,20 +862,88 @@
     if (!state.data) { box.innerHTML = pendingBlock(); return; }
     var list = state.data.notifications;
     var read = getReadMap();
+    var up = upcomingMissions();
+    var seen = getSeenMissions();
+    var html = '';
+    // ส่วน "ภารกิจใกล้ถึง" ด้านบน (ซ่อนเมื่อไม่มี) จุดแดง = ยังไม่เคยเห็น
+    if (up.length) {
+      html += '<div class="card m-sec"><div class="card-head"><h2>ภารกิจใกล้ถึง</h2>' +
+        '<button type="button" class="link-btn" data-act="open-cal"><span>ปฏิทิน</span>' + mi('chevron_right') + '</button></div><div class="m-list">' +
+        up.map(function (m) { return missionRowHtml(m, seen[m.id] !== m.date); }).join('') + '</div></div>';
+    }
     if (!list.length) {
-      box.innerHTML = '<div class="empty">' + mi('notifications_none') + 'ยังไม่มีแจ้งเตือน</div>';
+      if (!up.length) html += '<div class="empty">' + mi('notifications_none') + 'ยังไม่มีแจ้งเตือน</div>';
     } else {
-      box.innerHTML = list.map(function (n) {
+      html += list.map(function (n) {
         return '<article class="n-card"><div class="n-top">' + (read[n.id] ? '' : '<span class="dot" aria-label="ยังไม่อ่าน"></span>') +
           '<h3>' + esc(n.title) + '</h3></div>' + (n.detail ? '<p>' + esc(n.detail) + '</p>' : '') +
           '<time>' + esc(fmtDate(n.createdAt)) + '</time></article>';
       }).join('');
     }
-    // เปิดหน้านี้แล้วถือว่าอ่านทั้งหมด
+    box.innerHTML = html;
+    // เปิดหน้านี้แล้วถือว่าอ่านทั้งหมด (ทั้งแจ้งเตือนและภารกิจใกล้ถึง)
     var next = {};
     list.forEach(function (n) { next[n.id] = 1; });
     lsSet(READ_KEY, JSON.stringify(next));
+    markMissionsSeen();
     updateBadges();
+  }
+
+  // ----- หน้าปฏิทินภารกิจ -----
+  /** เปิดปฏิทินที่วันที่ระบุ (ไม่ระบุ = วันนี้) จำหน้าที่มาไว้ใช้ตอนกดย้อนกลับ */
+  function openCalendar(selKey) {
+    var k = isRealKey(selKey) ? selKey : todayKey();
+    var p = parseKey(k);
+    state.cal = { y: p.y, m: p.m, sel: k };
+    if (state.view !== 'cal') state.calFrom = state.view === 'notif' ? 'notif' : 'home';
+    showView('cal');
+  }
+  /** เปลี่ยนเดือนในปฏิทิน: เดือนปัจจุบันเลือกวันนี้ เดือนอื่นเลือกวันที่ 1 */
+  function calGoMonth(y, m) {
+    while (m < 1) { m += 12; y--; }
+    while (m > 12) { m -= 12; y++; }
+    if (y < 2000 || y > 2100) return;
+    var t = parseKey(todayKey());
+    state.cal = { y: y, m: m, sel: (t.y === y && t.m === m) ? dateKey(y, m, t.d) : dateKey(y, m, 1) };
+    renderCalView();
+  }
+  function missionDetailHtml(m) {
+    return '<div class="cm-item" style="--mc:' + m.color + '"><div class="cm-time">' + esc(timeText(m.time)) + '</div><div class="cm-body">' +
+      '<div class="cm-t">' + esc(m.title) + '</div>' +
+      (m.place ? '<div class="cm-meta">' + mi('place') + '<span>' + esc(m.place) + '</span></div>' : '') +
+      (m.owner ? '<div class="cm-meta">' + mi('person') + '<span>' + esc(m.owner) + '</span></div>' : '') +
+      (m.detail ? '<div class="cm-detail">' + esc(m.detail) + '</div>' : '') +
+      '<span class="cm-chip">' + esc(m.category) + (m.adminOnly ? ' · ' + mi('lock') + 'เฉพาะ admin' : '') + '</span></div></div>';
+  }
+  function renderCalView() {
+    var box = $('calBody');
+    if (!state.data) { box.innerHTML = pendingBlock(); return; }
+    if (!state.cal) { var tp = parseKey(todayKey()); state.cal = { y: tp.y, m: tp.m, sel: todayKey() }; }
+    var cal = state.cal, today = todayKey();
+    var first = dowOfKey(dateKey(cal.y, cal.m, 1)), total = daysInMonth(cal.y, cal.m);
+    var all = missionsAll();
+    var byDay = {};
+    all.forEach(function (m) { (byDay[m.date] = byDay[m.date] || []).push(m); });
+    var cells = '';
+    for (var i = 0; i < first; i++) cells += '<div class="cal-cell blank" aria-hidden="true"></div>';
+    for (var d = 1; d <= total; d++) {
+      var k = dateKey(cal.y, cal.m, d);
+      var ms = byDay[k] || [];
+      var dots = ms.slice(0, 3).map(function (m) { return '<i style="--mc:' + m.color + '"></i>'; }).join('');
+      cells += '<button type="button" class="cal-cell' + (k === today ? ' today' : '') + (k === cal.sel ? ' sel' : '') + '" data-act="cal-day" data-date="' + k + '" aria-pressed="' + (k === cal.sel ? 'true' : 'false') +
+        '" aria-label="' + d + ' ' + TH_MONTHS_FULL[cal.m - 1] + ' ' + (cal.y + 543) + (ms.length ? ' มี ' + ms.length + ' ภารกิจ' : '') + '"><span class="cal-num">' + d + '</span><span class="cal-dots">' + dots + '</span></button>';
+    }
+    var dow = TH_DAYS_SHORT.map(function (x) { return '<span>' + x + '</span>'; }).join('');
+    var dayList = byDay[cal.sel] || [];
+    var h = '<div class="card cal-card"><div class="cal-head">' +
+      '<button type="button" class="cal-nav" data-act="cal-prev" aria-label="เดือนก่อนหน้า">' + mi('chevron_left') + '</button>' +
+      '<div class="cal-title" aria-live="polite">' + TH_MONTHS_FULL[cal.m - 1] + ' ' + (cal.y + 543) + '</div>' +
+      '<button type="button" class="cal-nav" data-act="cal-next" aria-label="เดือนถัดไป">' + mi('chevron_right') + '</button></div>' +
+      '<div class="cal-dow">' + dow + '</div><div class="cal-grid">' + cells + '</div></div>' +
+      '<div class="card cal-day-card"><h3>' + esc(fmtDayLong(cal.sel)) + '</h3>' +
+      (dayList.length ? dayList.map(missionDetailHtml).join('') : '<div class="cal-hint" style="text-align:center;padding:14px 16px 18px">ไม่มีภารกิจในวันที่เลือก</div>') +
+      (isAdmin() ? '' : '<div class="cal-hint">ปฏิทินแสดงภารกิจย้อนหลัง 31 วัน และล่วงหน้า 120 วัน</div>') + '</div>';
+    box.innerHTML = h;
   }
 
   function renderSettingsView() {
@@ -721,7 +973,8 @@
     var o = { lead: '', title: '', sub: '', on: true, flagOn: 'ซ่อน', flagOff: 'แสดง', offTag: 'ซ่อนอยู่', edit: true, move: false };
     if (kind === 'systems') {
       o.lead = '<span class="lead ls" style="--c:' + sysBg(it) + '">' + sysGlyph(it.icon, it.iconFileId) + '</span>';
-      o.title = it.name; o.sub = (it.category ? it.category + ' · ' : '') + (it.url ? 'ตั้งลิงค์แล้ว' : 'ยังไม่ได้ตั้งลิงค์');
+      o.title = it.name; o.sub = (it.category ? it.category + ' · ' : '') + (it.url ? 'ตั้งลิงค์แล้ว' : 'ยังไม่ได้ตั้งลิงค์') +
+        (it.badgeOn ? ' · ป้าย "' + (it.badgeText || 'ใหม่') + '"' : '');
       o.on = it.visible; o.move = true;
     } else if (kind === 'banners') {
       o.lead = it.imageFileId ? '<span class="lead"><img src="' + driveImg(it.imageFileId) + '" alt="" width="44" height="44" loading="lazy" decoding="async"></span>' :
@@ -741,6 +994,11 @@
     } else if (kind === 'notifications') {
       o.lead = '<span class="lead" style="background:#185FA5">' + mi('notifications') + '</span>';
       o.title = it.title; o.sub = fmtDate(it.createdAt) + (it.detail ? ' · ' + it.detail.slice(0, 60) : ''); o.on = it.visible; o.edit = false;
+    } else if (kind === 'missions') {
+      o.lead = '<span class="lead" style="background:' + (safeHex(it.color) || MISSION_COLOR_DEFAULT) + '">' + mi(it.visibility === 'public' ? 'event' : 'lock') + '</span>';
+      o.title = it.title;
+      o.sub = [fmtDate(it.date), it.time ? timeText(it.time) : 'ทั้งวัน', it.place, it.visibility === 'public' ? '' : 'เฉพาะ admin'].filter(function (x) { return !!x; }).join(' · ');
+      o.on = it.visible;
     } else if (kind === 'documents') {
       var m = fileMeta(it.fileType);
       o.lead = '<span class="lead" style="background:' + m.color + '">' + mi(m.icon) + '</span>';
@@ -774,6 +1032,7 @@
     if (!state.admin) { body.innerHTML = loadingBlock(); return; }
     var a = state.admin, h = '';
     if (k === 'home') { renderHomeSettings(); return; }
+    if (k === 'missions') { renderMissionsAdmin(); return; }
     if (k === 'systems') h = addBtn('systems', 'เพิ่มระบบ') + listHtml('systems', a.systems);
     else if (k === 'banners') h = addBtn('banners', 'เพิ่มแบนเนอร์') + listHtml('banners', a.banners);
     else if (k === 'contacts') h = addBtn('contacts', 'เพิ่มผู้ติดต่อ') + listHtml('contacts', a.contacts || []);
@@ -792,6 +1051,32 @@
       return;
     }
     body.innerHTML = h;
+  }
+
+  // ----- admin: ปฏิทินภารกิจ -----
+  /** เดือนที่กรองรายการ (เริ่มที่เดือนปัจจุบันตามเวลาไทย) */
+  function missionFilter() {
+    if (!state.mFilter) { var t = parseKey(todayKey()); state.mFilter = { y: t.y, m: t.m }; }
+    return state.mFilter;
+  }
+  function renderMissionsAdmin() {
+    var body = $('subBody'), a = state.admin;
+    var f = missionFilter();
+    var prefix = f.y + '-' + ('0' + f.m).slice(-2);
+    var items = (a.missions || []).filter(function (m) { return String(m.date).slice(0, 7) === prefix; });
+    var lead = Number(a.settings && a.settings.missionLeadDays) || 1;
+    var opts = '';
+    for (var n = 1; n <= 7; n++) opts += '<option value="' + n + '"' + (n === lead ? ' selected' : '') + '>' + n + ' วัน' + (n === 1 ? ' (วันนี้และพรุ่งนี้)' : ' (วันนี้ถึงอีก ' + n + ' วัน)') + '</option>';
+    body.innerHTML = addBtn('missions', 'เพิ่มภารกิจ') +
+      '<div class="form-card"><div class="cal-month-bar">' +
+      '<button type="button" class="cal-nav" data-act="ms-prev" aria-label="เดือนก่อนหน้า">' + mi('chevron_left') + '</button>' +
+      '<div class="cal-title">' + TH_MONTHS_FULL[f.m - 1] + ' ' + (f.y + 543) + '</div>' +
+      '<button type="button" class="cal-nav" data-act="ms-next" aria-label="เดือนถัดไป">' + mi('chevron_right') + '</button></div></div>' +
+      listHtml('missions', items) +
+      '<div class="form-card"><h3 class="sec-title">แจ้งเตือนภารกิจล่วงหน้า</h3>' +
+      '<label class="fld"><span>แสดง "ภารกิจใกล้ถึง" บนหน้าแรกล่วงหน้า</span><select class="inp" id="msLead">' + opts + '</select></label>' +
+      '<div class="hint" style="margin:-6px 0 12px">ตัวเลข 1 = แสดงภารกิจของวันนี้และพรุ่งนี้ (ตั้งได้ 1-7 วัน)</div>' +
+      '<button type="button" class="btn btn-primary btn-block" data-act="ms-lead-save">' + mi('save') + '<span>บันทึก</span></button></div>';
   }
 
   function renderStats() {
@@ -855,6 +1140,7 @@
     else if (state.view === 'search') renderSearchView();
     else if (state.view === 'contact') renderContactView();
     else if (state.view === 'notif') renderNotifView();
+    else if (state.view === 'cal') renderCalView();
     else if (state.view === 'settings') renderSettingsView();
   }
   function renderAll() {
@@ -867,10 +1153,10 @@
   // ===== สลับหน้า =====
   function showView(name) {
     state.view = name;
-    ['home', 'docs', 'search', 'contact', 'notif', 'settings', 'sub'].forEach(function (v) {
+    ['home', 'docs', 'search', 'contact', 'notif', 'cal', 'settings', 'sub'].forEach(function (v) {
       $('view-' + v).classList.toggle('active', v === name);
     });
-    var navKey = name === 'sub' ? 'settings' : name;      // หน้าแจ้งเตือนเปิดจากกระดิ่ง ไม่มีปุ่มในเมนูล่าง
+    var navKey = name === 'sub' ? 'settings' : (name === 'cal' ? 'home' : name);      // หน้าแจ้งเตือนเปิดจากกระดิ่ง ไม่มีปุ่มในเมนูล่าง / ปฏิทินถือเป็นส่วนของหน้าหลัก
     var btns = document.querySelectorAll('#bottomNav .nav-b');
     for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-view') === navKey);
     window.scrollTo(0, 0);
@@ -879,6 +1165,7 @@
     if (name === 'search') renderSearchView();
     if (name === 'contact') renderContactView();
     if (name === 'notif') { renderNotifView(); logEvent('view_notification', ''); }
+    if (name === 'cal') renderCalView();
     if (name === 'settings') renderSettingsView();
   }
   function gotoView(name) {
@@ -896,6 +1183,7 @@
     if (key === 'stats') { loadStats(); return; }
     renderSub();
     adminApi('getAdminData').then(function (snap) {
+      if (!isAdmin()) return;   // ออกจากระบบระหว่างรอ → ไม่เก็บข้อมูล admin กลับเข้า state
       state.admin = snap;
       if (key === 'home' && state.homeDraft && !state.homeDraft.dirty) state.homeDraft = null;   // ยังไม่ได้แก้อะไร → ใช้ค่าล่าสุดจากหลังบ้าน
       renderSub();
@@ -971,6 +1259,7 @@
         done();
         handle.close();
         renderAll();
+        loadAdminQuiet();                      // โหลดข้อมูล admin เบื้องหลัง เพื่อให้หน้าแรกรวมภารกิจเฉพาะ admin
         toast('เข้าสู่โหมด admin แล้ว', 'success');
         if (afterLogin) afterLogin();
       }, function (err) {
@@ -1008,9 +1297,25 @@
     });
     setTimeout(function () { box.focus(); }, 30);
   }
+  /** โหลดข้อมูล admin เบื้องหลัง (ใช้แสดงภารกิจเฉพาะ admin บนหน้าแรก/ปฏิทิน) ผิดพลาดเงียบ ยกเว้น token หมดอายุ → ออกจากโหมด admin แบบเบา */
+  function loadAdminQuiet() {
+    if (!isAdmin()) return Promise.resolve();
+    return api('getAdminData', state.token).then(function (snap) {
+      if (!isAdmin()) return;
+      state.admin = snap;
+      renderAll();
+    }).catch(function (err) {
+      if (isTokenExpired(err)) {
+        clearAdmin();
+        renderAll();
+        toast('หมดเวลาเข้าใช้งาน admin กรุณาใส่รหัส PIN ใหม่ถ้าต้องการจัดการระบบ', 'info', 4000);
+      }
+    });
+  }
   function clearAdmin() {
     state.token = '';
     state.admin = null;
+    state.seenAdmin = {};
     ssDel(TOKEN_KEY);
   }
   function expireAdmin() {
@@ -1051,7 +1356,7 @@
   function maybeShowPopup() {
     var p = state.data && state.data.popup;
     if (!p || state.popupShown) return;
-    var key = 'rpt_popup_' + p.id + '_' + localDateKey();
+    var key = 'rpt_popup_' + p.id + '_' + todayKey().replace(/-/g, '');   // รูปแบบ YYYYMMDD เดิม (วันที่ไทย) ค่าที่เคยเก็บไว้ยังใช้ได้
     if (lsGet(key) === '1') { state.popupShown = true; return; }
     state.popupShown = true;
     var skip = false;
@@ -1149,6 +1454,80 @@
     return { get: function () { return cur; }, set: function (v) { cur = safeHex(v); paint(); } };
   }
 
+  // ----- ช่องวันที่แบบ พ.ศ. (เลือก วัน / เดือน / ปี จากรายการ) และช่องเวลา 24 ชั่วโมง (ชั่วโมง.นาที) -----
+  // ใช้ช่องเลือกแทน input type=date เพราะ input แบบนั้นแสดงปี ค.ศ. ตามเครื่อง และเวลาอาจขึ้น AM/PM
+  function dateFieldHtml(name) {
+    var days = '<option value="">วัน</option>';
+    for (var d = 1; d <= 31; d++) days += '<option value="' + d + '">' + d + '</option>';
+    var months = '<option value="">เดือน</option>' + TH_MONTHS_FULL.map(function (n, i) { return '<option value="' + (i + 1) + '">' + n + '</option>'; }).join('');
+    return '<div class="date-fld" data-date="' + name + '"><select class="inp" data-p="d" aria-label="วัน">' + days + '</select>' +
+      '<select class="inp" data-p="m" aria-label="เดือน">' + months + '</select><select class="inp" data-p="y" aria-label="ปี พ.ศ."></select></div>';
+  }
+  /** ผูกช่องวันที่ คืน {get, set, clear}; get() = {key:'yyyy-MM-dd'|'', partial: เลือกไม่ครบ/ไม่ใช่วันจริง}; ปีที่เลือกได้ = ปีนี้ - spanBack ถึง ปีนี้ + spanFwd (รวมปีของค่าเดิม) */
+  function bindDateField(root, name, initialKey, spanBack, spanFwd, onChange) {
+    var wrap = root.querySelector('[data-date="' + name + '"]');
+    var selD = wrap.querySelector('[data-p=d]'), selM = wrap.querySelector('[data-p=m]'), selY = wrap.querySelector('[data-p=y]');
+    var ip = isRealKey(initialKey) ? parseKey(initialKey) : null;
+    var yNow = bkkParts().y, from = yNow - spanBack, to = yNow + spanFwd;
+    if (ip) { from = Math.min(from, ip.y); to = Math.max(to, ip.y); }
+    var yopts = '<option value="">ปี พ.ศ.</option>';
+    for (var y = from; y <= to; y++) yopts += '<option value="' + y + '">' + (y + 543) + '</option>';
+    selY.innerHTML = yopts;
+    /** จำนวนวันในรายการตามเดือน/ปีที่เลือก (ยังไม่เลือกปีใช้ปีอธิกสุรทิน กัน 29 ก.พ. ถูกตัด) */
+    function fitDays() {
+      var m = +selM.value, yy = +selY.value || 2024;
+      var max = m ? daysInMonth(yy, m) : 31, cur = +selD.value;
+      var html = '<option value="">วัน</option>';
+      for (var d = 1; d <= max; d++) html += '<option value="' + d + '">' + d + '</option>';
+      selD.innerHTML = html;
+      if (cur) selD.value = String(Math.min(cur, max));
+    }
+    function changed() { fitDays(); if (onChange) onChange(); }
+    selM.addEventListener('change', changed);
+    selY.addEventListener('change', changed);
+    selD.addEventListener('change', function () { if (onChange) onChange(); });
+    function set(k) {
+      var p = isRealKey(k) ? parseKey(k) : null;
+      selM.value = p ? String(p.m) : '';
+      selY.value = p ? String(p.y) : '';
+      fitDays();
+      selD.value = p ? String(p.d) : '';
+    }
+    set(initialKey);
+    return {
+      get: function () {
+        if (!selD.value && !selM.value && !selY.value) return { key: '', partial: false };
+        if (!selD.value || !selM.value || !selY.value) return { key: '', partial: true };
+        var k = dateKey(+selY.value, +selM.value, +selD.value);
+        return isRealKey(k) ? { key: k, partial: false } : { key: '', partial: true };
+      },
+      set: set,
+      clear: function () { set(''); if (onChange) onChange(); }
+    };
+  }
+  function timeFieldHtml(name) {
+    var hs = '<option value="">ไม่ระบุ</option>', ms = '<option value="">นาที</option>';
+    for (var h = 0; h < 24; h++) hs += '<option value="' + two(h) + '">' + two(h) + '</option>';
+    for (var n = 0; n < 60; n++) ms += '<option value="' + two(n) + '">' + two(n) + '</option>';
+    return '<div class="time-fld" data-time="' + name + '"><select class="inp" data-p="h" aria-label="ชั่วโมง (00-23)">' + hs + '</select><span class="time-sep">.</span>' +
+      '<select class="inp" data-p="n" aria-label="นาที (00-59)">' + ms + '</select></div>';
+  }
+  /** ผูกช่องเวลา คืน {get}; get() = {value:'HH:mm'|'', partial: เลือกนาทีแต่ไม่เลือกชั่วโมง}; เลือกชั่วโมงอย่างเดียว = นาทีเป็น 00 */
+  function bindTimeField(root, name, initial) {
+    var wrap = root.querySelector('[data-time="' + name + '"]');
+    var selH = wrap.querySelector('[data-p=h]'), selN = wrap.querySelector('[data-p=n]');
+    var m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(initial || '');
+    selH.value = m ? m[1] : '';
+    selN.value = m ? m[2] : '';
+    selH.addEventListener('change', function () { if (!selH.value) selN.value = ''; });     // เลือก "ไม่ระบุ" = ล้างนาทีด้วย
+    return {
+      get: function () {
+        if (!selH.value) return { value: '', partial: !!selN.value };
+        return { value: selH.value + ':' + (selN.value || '00'), partial: false };
+      }
+    };
+  }
+
   function openSystemForm(id) {
     var s = id && state.admin ? findIn(state.admin.systems, id) : null;
     var cats = {};
@@ -1161,7 +1540,7 @@
       body: fieldInput('ชื่อระบบ *', 'name', { max: 60, ph: 'เช่น ระบบอาวุธปืน' }) +
         fieldInput('คำอธิบายสั้น', 'desc', { max: 120 }) +
         fieldInput('ลิงค์ระบบ (ขึ้นต้น https://)', 'url', { type: 'url', max: 2000, ph: 'https://', inputmode: 'url' }) +
-        '<div class="fld"><span>สีพื้นวงกลม</span>' + colorPickerHtml(PALETTE, false) + '</div>' +
+        '<div class="fld" id="sfBg"><span>สีพื้นวงกลม</span>' + colorPickerHtml(PALETTE, false) + '</div>' +
         '<div class="fld"><span>ไอคอน</span><div class="prev-row"><span class="ls" id="sfPrev"></span><div class="hint" style="margin:0">ตัวอย่างบนหน้าแรก</div></div>' +
         '<div class="img-acts"><button type="button" class="btn btn-outline" data-pick="1">' + mi('upload') + '<span>อัปโหลดไอคอน</span></button>' +
         '<button type="button" class="btn btn-outline" data-clear="1">' + mi('delete') + '<span>ลบรูปไอคอน</span></button></div>' +
@@ -1169,6 +1548,17 @@
         '<div style="height:10px"></div>' + iconGridHtml() + '</div>' +
         fieldInput('หมวดหมู่', 'category', { max: 40, list: 'catList' }) +
         '<datalist id="catList">' + Object.keys(cats).map(function (c) { return '<option value="' + esc(c) + '">'; }).join('') + '</datalist>' +
+        '<div class="fld" id="sfBadge"><span>ป้ายวงกลมรอบไอคอน</span>' +
+        '<label class="sw-row"><input type="checkbox" name="badgeOn"><span>แสดงป้ายที่ไอคอนระบบนี้</span></label>' +
+        '<div data-wrap="badgeBody" hidden>' +
+        '<div class="badge-prev"><span id="sfBadgePrev"></span><div class="hint" style="margin:0" id="sfBadgeHint">ตัวอย่างบนหน้าแรก</div></div>' +
+        fieldInput('ข้อความบนป้าย (ไม่เกิน 10 ตัวอักษร)', 'badgeText', { max: 10, ph: 'ใหม่' }) +
+        '<div class="seg" style="margin-top:-6px">' + BADGE_TEXTS.map(function (t) { return '<button type="button" data-bt="' + t + '">' + t + '</button>'; }).join('') + '</div>' +
+        '<div class="fld" id="sfBadgeColor"><span>สีวงกลมและป้าย</span>' + colorPickerHtml(BADGE_COLORS, false) + '</div>' +
+        '<div class="fld"><span>วันที่หยุดแสดงป้าย (ไม่บังคับ)</span>' + dateFieldHtml('bdate') +
+        '<div class="fld-acts"><button type="button" class="btn btn-outline" data-bd-clear="1">' + mi('delete') + '<span>ล้างวันที่</span></button></div>' +
+        '<div class="hint">ไม่ใส่ = แสดงป้ายตลอดจนกว่าจะปิดเอง ถ้าใส่ ป้ายจะหายเองหลังวันที่นี้ (ตามเวลาไทย)</div></div>' +
+        '</div></div>' +
         '<label class="sw-row"><input type="checkbox" name="visible" checked><span>แสดงบนหน้าหลัก</span></label>',
       actions: [
         { label: 'ยกเลิก', cls: 'btn-outline', onClick: function (h) { h.close(); } },
@@ -1179,6 +1569,8 @@
             var name = getVal(b, 'name'), url = getVal(b, 'url');
             if (!name) { toast('กรุณากรอกชื่อระบบ', 'error'); return; }
             if (!needHttps(url, 'ลิงค์ระบบ')) return;
+            var bu = badgeDate.get();
+            if (bu.partial) { toast('วันที่หยุดแสดงป้ายเลือกไม่ครบ กรุณาเลือกให้ครบ วัน เดือน ปี หรือกด "ล้างวันที่"', 'error', 4500); return; }
             var uploadedId = '';     // รหัสไฟล์ที่เพิ่งอัปโหลดในรอบนี้ (ใช้ยกเลิกถ้าบันทึกไม่สำเร็จ)
             var step = Promise.resolve(iconFileId);
             if (newIcon) {
@@ -1192,7 +1584,8 @@
               var bg = colorCp.get() || PALETTE[0];
               return adminApi('saveSystem', {
                 id: s ? s.id : '', name: name, desc: getVal(b, 'desc'), url: url, icon: pickIcon(), color: bg, iconBg: bg, iconFileId: fileId || '',
-                category: getVal(b, 'category'), visible: getChk(b, 'visible')
+                category: getVal(b, 'category'), visible: getChk(b, 'visible'),
+                badgeOn: getChk(b, 'badgeOn'), badgeText: getVal(b, 'badgeText') || 'ใหม่', badgeColor: badgeCp.get() || BADGE_COLOR_DEFAULT, badgeUntil: bu.key
               });
             }).catch(function (err) {
               if (uploadedId) api('discardUpload', state.token, uploadedId).catch(function () {});   // บันทึกไม่สำเร็จ → เก็บกวาดรูปที่เพิ่งอัปโหลด
@@ -1205,19 +1598,49 @@
     var b = m.body;
     var prev = b.querySelector('#sfPrev');
     var fileInput = b.querySelector('[name=iconFile]');
+    function glyphNow() { return newIcon ? '<img class="ls-img" src="' + newIcon.dataUrl + '" alt="">' : sysGlyph(pickIcon(), iconFileId); }
     function paintPrev() {
       prev.style.setProperty('--c', colorCp.get() || PALETTE[0]);
-      prev.innerHTML = newIcon ? '<img class="ls-img" src="' + newIcon.dataUrl + '" alt="">' : sysGlyph(pickIcon(), iconFileId);
+      prev.innerHTML = glyphNow();
+      paintBadge();
+    }
+    /** ตัวอย่างสดของป้าย: ซ่อนส่วนตั้งค่าเมื่อปิดสวิตช์ / วันที่หยุดแสดงผ่านไปแล้วจะไม่มีป้าย (เหมือนหน้าแรก) */
+    function paintBadge() {
+      if (!badgeCp) return;
+      var on = getChk(b, 'badgeOn');
+      b.querySelector('[data-wrap=badgeBody]').hidden = !on;
+      var txt = getVal(b, 'badgeText');
+      var qs = b.querySelectorAll('[data-bt]');
+      for (var i = 0; i < qs.length; i++) qs[i].classList.toggle('on', qs[i].getAttribute('data-bt') === txt);
+      if (!on) return;
+      var until = badgeDate.get();
+      var expired = !!until.key && until.key < todayKey();
+      var bd = expired ? null : makeBadge(txt, badgeCp.get() || BADGE_COLOR_DEFAULT);
+      b.querySelector('#sfBadgePrev').innerHTML = sysSlotHtml(colorCp.get() || PALETTE[0], glyphNow(), bd);
+      b.querySelector('#sfBadgeHint').textContent = expired ? 'วันที่หยุดแสดงผ่านไปแล้ว ป้ายจะไม่แสดงบนหน้าแรก' :
+        (getVal(b, 'url') ? 'ตัวอย่างบนหน้าแรก' : 'ตัวอย่างบนหน้าแรก (ระบบนี้ยังไม่มีลิงค์ ป้ายจะยังไม่แสดงจนกว่าจะใส่ลิงค์)');
     }
     var pickIcon = bindPicker(b, '.ic-b', 'data-icon', s ? s.icon : ICON_CHOICES[0], function () {
       newIcon = null; iconFileId = '';      // เลือกไอคอนจากชุด = เลิกใช้รูปที่อัปโหลด
       paintPrev();
     });
-    var colorCp = bindColorGrid(b, s ? sysBg(s) : PALETTE[count % PALETTE.length], paintPrev);
+    var colorCp = bindColorGrid(b.querySelector('#sfBg'), s ? sysBg(s) : PALETTE[count % PALETTE.length], paintPrev);
+    var badgeCp = bindColorGrid(b.querySelector('#sfBadgeColor'), s && safeHex(s.badgeColor) ? s.badgeColor : BADGE_COLOR_DEFAULT, paintBadge);
+    var badgeDate = bindDateField(b, 'bdate', s ? s.badgeUntil : '', 1, 5, paintBadge);
     if (s) {
       setVal(b, 'name', s.name); setVal(b, 'desc', s.desc); setVal(b, 'url', s.url); setVal(b, 'category', s.category);
       b.querySelector('[name=visible]').checked = !!s.visible;
     }
+    setVal(b, 'badgeText', s && s.badgeText ? s.badgeText : 'ใหม่');
+    b.querySelector('[name=badgeOn]').checked = !!(s && s.badgeOn);
+    b.querySelector('[name=badgeOn]').addEventListener('change', paintBadge);
+    b.querySelector('[name=badgeText]').addEventListener('input', paintBadge);
+    b.querySelector('[name=url]').addEventListener('input', paintBadge);
+    var quick = b.querySelectorAll('[data-bt]');
+    for (var qi = 0; qi < quick.length; qi++) {
+      quick[qi].addEventListener('click', function () { setVal(b, 'badgeText', this.getAttribute('data-bt')); paintBadge(); });
+    }
+    b.querySelector('[data-bd-clear]').addEventListener('click', function () { badgeDate.clear(); });
     paintPrev();
     b.querySelector('[data-pick]').addEventListener('click', function () { fileInput.click(); });
     b.querySelector('[data-clear]').addEventListener('click', function () { newIcon = null; iconFileId = ''; fileInput.value = ''; paintPrev(); });
@@ -1530,6 +1953,67 @@
     }
   }
 
+  /** ฟอร์มเพิ่ม/แก้ภารกิจ: วันที่แสดงเป็น พ.ศ. เวลาเลือก ชั่วโมง.นาที แบบ 24 ชั่วโมง ตัวเลือก "เฉพาะ admin" พร้อมคำเตือนข้อมูลลับ */
+  function openMissionForm(id) {
+    var ms = id && state.admin ? findIn(state.admin.missions || [], id) : null;
+    var f = missionFilter(), tp = parseKey(todayKey());
+    var defDate = ms ? ms.date : ((f.y === tp.y && f.m === tp.m) ? todayKey() : dateKey(f.y, f.m, 1));
+    var m = openModal({
+      title: ms ? 'แก้ไขภารกิจ' : 'เพิ่มภารกิจ', icon: 'event', focus: '[name=title]',
+      body: fieldInput('ชื่อภารกิจ *', 'title', { max: 100, ph: 'เช่น ประชุมประจำเดือน' }) +
+        '<div class="fld"><span>วันที่ *</span>' + dateFieldHtml('mdate') + '</div>' +
+        '<div class="fld"><span>เวลา (24 ชั่วโมง ชั่วโมง.นาที)</span>' + timeFieldHtml('mtime') + '<div class="hint">ไม่เลือกชั่วโมง = ไม่ระบุเวลา (แสดงเป็น "ทั้งวัน")</div></div>' +
+        fieldInput('สถานที่', 'place', { max: 100 }) + fieldInput('ผู้รับผิดชอบ', 'owner', { max: 60 }) +
+        '<div class="fld"><span>หมวด</span><div class="seg seg-grid" style="margin-bottom:0">' +
+        MISSION_CATS.map(function (c) { return '<button type="button" data-cat="' + c + '">' + c + '</button>'; }).join('') + '</div></div>' +
+        '<div class="fld" id="mcWrap"><span>สีที่แสดงในปฏิทิน</span>' + colorPickerHtml(MISSION_COLORS, false) + '</div>' +
+        '<label class="fld"><span>รายละเอียด</span><textarea class="inp" name="detail" maxlength="500"></textarea><div class="fld-count" id="mdCount"></div></label>' +
+        '<label class="sw-row"><input type="checkbox" name="adminOnly"><span>แสดงเฉพาะ admin (ผู้ใช้ทั่วไปมองไม่เห็น)</span></label>' +
+        '<div class="warn-box">' + mi('warning') + '<span>ภารกิจที่ตั้งเป็นสาธารณะ ทุกคนที่มีลิงค์เห็นได้ ห้ามใส่ข้อมูลปฏิบัติการลับ</span></div>' +
+        '<label class="sw-row"><input type="checkbox" name="visible" checked><span>แสดงในปฏิทิน</span></label>',
+      actions: [
+        { label: 'ยกเลิก', cls: 'btn-outline', onClick: function (h) { h.close(); } },
+        {
+          label: 'บันทึก', icon: 'save', cls: 'btn-primary',
+          onClick: function (h) {
+            var b = h.body;
+            var title = getVal(b, 'title');
+            if (!title) { toast('กรุณากรอกชื่อภารกิจ', 'error'); return; }
+            var dv = dateCtl.get();
+            if (!dv.key) { toast(dv.partial ? 'วันที่เลือกไม่ครบ หรือไม่ใช่วันที่จริง กรุณาเลือก วัน เดือน ปี ให้ถูกต้อง' : 'กรุณาเลือกวันที่ของภารกิจ', 'error', 4500); return; }
+            var tv = timeCtl.get();
+            if (tv.partial) { toast('กรุณาเลือกชั่วโมงด้วย (หรือเลือก "ไม่ระบุ" ที่ช่องชั่วโมง)', 'error', 4500); return; }
+            var detail = getVal(b, 'detail');
+            if (detail.length > 500) { toast('รายละเอียดยาวเกิน 500 ตัวอักษร กรุณาตัดให้สั้นลง', 'error', 4000); return; }
+            return adminApi('saveMission', {
+              id: ms ? ms.id : '', title: title, date: dv.key, time: tv.value, place: getVal(b, 'place'), owner: getVal(b, 'owner'),
+              category: pickCat(), color: colorCp.get() || MISSION_COLOR_DEFAULT, detail: detail,
+              visibility: getChk(b, 'adminOnly') ? 'admin' : 'public', visible: getChk(b, 'visible')
+            }).then(function (snap) {
+              var p = parseKey(dv.key);
+              state.mFilter = { y: p.y, m: p.m };         // ให้รายการที่เพิ่งบันทึกอยู่ในเดือนที่กำลังดู
+              applySnapshot(snap); toast('บันทึกภารกิจเรียบร้อย', 'success'); h.close();
+            });
+          }
+        }
+      ]
+    });
+    var b = m.body;
+    var dateCtl = bindDateField(b, 'mdate', defDate, 1, 3);
+    var timeCtl = bindTimeField(b, 'mtime', ms ? ms.time : '');
+    var pickCat = bindPicker(b, '[data-cat]', 'data-cat', ms && MISSION_CATS.indexOf(ms.category) >= 0 ? ms.category : MISSION_CATS[0]);
+    var colorCp = bindColorGrid(b.querySelector('#mcWrap'), ms && safeHex(ms.color) ? ms.color : MISSION_COLOR_DEFAULT);
+    var detailEl = b.querySelector('[name=detail]'), countEl = b.querySelector('#mdCount');
+    function paintCount() { countEl.textContent = detailEl.value.length + ' / 500 ตัวอักษร'; }
+    detailEl.addEventListener('input', paintCount);
+    if (ms) {
+      setVal(b, 'title', ms.title); setVal(b, 'place', ms.place); setVal(b, 'owner', ms.owner); setVal(b, 'detail', ms.detail);
+      b.querySelector('[name=adminOnly]').checked = ms.visibility !== 'public';
+      b.querySelector('[name=visible]').checked = !!ms.visible;
+    }
+    paintCount();
+  }
+
   // ===== ตั้งค่า: โลโก้และหน้าแรก =====
   var homeCp = null;      // ตัวเลือกสีของการ์ดวันที่ (สร้างใหม่ทุกครั้งที่วาดหน้า)
   function newHomeDraft(home) {
@@ -1637,7 +2121,7 @@
     });
   }
 
-  var FORM_OPENERS = { systems: openSystemForm, banners: openBannerForm, contacts: openContactForm, announcements: openAnnouncementForm, documents: openDocumentForm };
+  var FORM_OPENERS = { systems: openSystemForm, banners: openBannerForm, contacts: openContactForm, announcements: openAnnouncementForm, documents: openDocumentForm, missions: openMissionForm };
 
   // ===== ตัวจัดการคลิกทั้งหมด (event delegation) =====
   var ACTIONS = {
@@ -1726,6 +2210,27 @@
       toast('คืนค่าเริ่มต้นแล้ว กดบันทึกเพื่อใช้งานจริง', 'info', 3000);
     },
     'hs-save': function (el) { runBusy(el, saveHomeDraft); },
+    // ----- ปฏิทินภารกิจ -----
+    'open-cal': function () { openCalendar(); },
+    'cal-open': function (el) { openCalendar(el.getAttribute('data-date')); },
+    'cal-back': function () { showView(state.calFrom === 'notif' ? 'notif' : 'home'); },
+    'cal-prev': function () { if (state.cal) calGoMonth(state.cal.y, state.cal.m - 1); },
+    'cal-next': function () { if (state.cal) calGoMonth(state.cal.y, state.cal.m + 1); },
+    'cal-today': function () { openCalendar(todayKey()); },
+    'cal-day': function (el) {
+      var k = el.getAttribute('data-date');
+      if (!isRealKey(k) || !state.cal) return;
+      state.cal.sel = k;
+      renderCalView();
+    },
+    'ms-prev': function () { var f = missionFilter(); state.mFilter = f.m === 1 ? { y: f.y - 1, m: 12 } : { y: f.y, m: f.m - 1 }; renderSub(); },
+    'ms-next': function () { var f = missionFilter(); state.mFilter = f.m === 12 ? { y: f.y + 1, m: 1 } : { y: f.y, m: f.m + 1 }; renderSub(); },
+    'ms-lead-save': function (el) {
+      var v = $('msLead').value;
+      runBusy(el, function () {
+        return adminApi('saveMissionSettings', { missionLeadDays: v }).then(function (snap) { applySnapshot(snap); toast('บันทึกการตั้งค่าเรียบร้อย', 'success'); });
+      });
+    },
     'stats-range': function (el) { state.statsDays = +el.getAttribute('data-days'); loadStats(); },
     'stats-reload': function () { loadStats(); }
   };
@@ -1746,6 +2251,11 @@
     if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.classList && e.target.classList.contains('slide')) {
       e.preventDefault();
       ACTIONS['banner-open'](e.target);
+    }
+    // การ์ดวันที่หน้าแรกเป็นปุ่ม (role=button) กด Enter / เว้นวรรคเพื่อเปิดปฏิทิน
+    if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.id === 'heroHome') {
+      e.preventDefault();
+      ACTIONS['open-cal']();
     }
   });
 
@@ -1807,7 +2317,9 @@
     phone: 'M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A15 15 0 013 6a2 2 0 012-2z',
     chat: 'M4 5h16v11H9l-5 4zM8 9h8M8 12h5',
     backspace: 'M9 5h11v14H9l-6-7zM12 9l5 6M17 9l-5 6',
-    palette: 'M12 3a9 9 0 100 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a3 3 0 003-3c0-5-4-11-8-11zM7.5 11.5h.01M10.5 7.5h.01M15 8h.01'
+    palette: 'M12 3a9 9 0 100 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a3 3 0 003-3c0-5-4-11-8-11zM7.5 11.5h.01M10.5 7.5h.01M15 8h.01',
+    chevron_left: 'M15 5l-7 7 7 7',
+    clock: 'M12 4a8 8 0 100 16 8 8 0 000-16zM12 8v4l3 2'
   };
   // ชื่อไอคอนของฟอนต์ -> ชื่อรูปใน SVG_PATHS (ตัวที่ไม่อยู่ในรายการใช้รูปวงกลมแทน)
   var SVG_ALIAS = {
@@ -1820,6 +2332,7 @@
     description: 'doc', article: 'doc', assignment: 'doc', picture_as_pdf: 'doc', table_chart: 'doc', slideshow: 'doc',
     inventory_2: 'inbox', view_carousel: 'carousel', insights: 'chart', bar_chart: 'chart', check_box_outline_blank: 'box_empty',
     location_on: 'pin', calendar_month: 'calendar', groups: 'people',
+    event: 'calendar', today: 'calendar', event_note: 'calendar', place: 'pin', schedule: 'clock',
     call: 'phone', contact_phone: 'phone', contacts: 'people', restart_alt: 'refresh', dashboard_customize: 'home', add_photo_alternate: 'image', check_box: 'check'
   };
   // สร้างรหัส SVG ของไอคอนตามชื่อ (ใช้ได้กับทุกชื่อที่ผ่าน safeIcon)
@@ -1889,6 +2402,7 @@
   // ===== เริ่มทำงาน =====
   function boot() {
     watchIconFont();
+    lsDel(MISSION_SEEN_KEY_OLD);   // ลบคีย์ v1 เก่าที่อาจมี id ภารกิจ admin ค้างอยู่
     state.token = ssGet(TOKEN_KEY) || '';
     var track = $('bannerTrack');
     var scrollTimer = null;
@@ -1914,6 +2428,7 @@
     if (state.configError && !state.data) return;     // ยังไม่ตั้งค่า API_URL แสดงข้อความไทยแทน ไม่เรียกหลังบ้าน
     logEvent('open_app', '');
     loadData();
+    loadAdminQuiet();                                  // มี token เดิมใน sessionStorage → โหลดข้อมูล admin (ภารกิจเฉพาะ admin)
   }
   boot();
 })();
