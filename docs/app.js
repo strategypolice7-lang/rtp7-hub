@@ -20,6 +20,12 @@
   var MISSION_COLORS = ['#1A4FA8', '#E5484D', '#2E9E5B', '#F6B93B', '#7B3FB5', '#00838F', '#E8710A'];            // สีภารกิจในปฏิทิน
   var MISSION_COLOR_DEFAULT = '#1A4FA8';
   var MISSION_CATS = ['ประชุม', 'ปฏิบัติการ', 'กิจกรรม', 'อื่นๆ'];
+  var MISSION_MAX_SPAN = 90;             // ห้วงภารกิจยาวสุดกี่วัน (นับรวมวันเริ่มและวันสิ้นสุด) ตรงกับ server
+  var CAL_MAX_ITEMS = 5;                 // ปฏิทิน: วันหนึ่งแสดงได้สูงสุดกี่รายการ (แถบ/จุด) เกินแสดง "+N"
+  var DEADLINE_COLOR = '#C81E1E';        // สีกำหนดส่งรายงาน (จุดแดงในปฏิทิน)
+  var UNIT_GROUPS = ['ภ.จว.', 'บก.สส.', 'กก.', 'สภ.', 'อื่นๆ'];                       // กลุ่มหน่วยผู้รับ (ตรงกับ server)
+  var DOC_SPEEDS = ['ปกติ', 'ด่วน', 'ด่วนมาก', 'ด่วนที่สุด'];                          // ชั้นความเร็วของหนังสือ (ตรงกับ server)
+  var DOC_MAX_DEADLINES = 10, DOC_DETAIL_MAX = 2000;
   var NO_LINK_BG = '#AEB9C9';            // วงเทาของระบบที่ยังไม่มีลิงค์
   var HERO_DEFAULT_BG = '#FFD400';
   var HERO_DEFAULT_OVERLAY = 35;         // ความเข้มแผ่นสีทับรูป hero เมื่อยังไม่เคยตั้ง
@@ -28,14 +34,18 @@
   var TH_MONTHS_FULL = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
   var TH_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
   var TH_DAYS_SHORT = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-  var CACHE_KEY = 'rpt_pub_cache_v3';
+  var CACHE_KEY = 'rpt_pub_cache_v4';
+  var CACHE_KEY_OLD = 'rpt_pub_cache_v3';      // แคชข้อมูลหน้าแรกรุ่นก่อน v3.2 → ลบทิ้งตอนเปิดแอป
   var READ_KEY = 'rpt_read_ids_v1';
-  var MISSION_SEEN_KEY = 'missions_seen_v2';   // ภารกิจใกล้ถึงที่เคยเห็นแล้ว (เก็บ id -> วันที่ภารกิจ) ใช้นับตัวเลขบนกระดิ่ง; เก็บเฉพาะภารกิจสาธารณะ (v2)
-  var MISSION_SEEN_KEY_OLD = 'missions_seen_v1';   // คีย์เก่า (v1 เคยเก็บ id ภารกิจ admin ด้วย) → ลบทิ้งตอนเปิดแอป
+  // รายการใกล้ถึงที่เคยเห็นแล้ว (เก็บ คีย์รายการ -> วันที่หมดความหมาย) ใช้นับตัวเลขบนกระดิ่ง; เก็บเฉพาะรายการสาธารณะ (v3)
+  // คีย์: ภารกิจวันเดียว/ห้วงที่ยังไม่เริ่ม m:id:วันเริ่ม | ห้วงที่กำลังอยู่ r:id:วันนี้ (วันใหม่ = ยังไม่เห็นอีก) | กำหนดส่ง d:id:วัน:เวลา:วันนี้
+  var MISSION_SEEN_KEY = 'missions_seen_v3';
+  var MISSION_SEEN_KEYS_OLD = ['missions_seen_v1', 'missions_seen_v2'];   // คีย์เก่า (v1 เคยเก็บ id ภารกิจ admin ด้วย) → ลบทิ้งตอนเปิดแอป
+  var MY_UNIT_KEY = 'my_unit_v1';          // หน่วยของฉัน (id หน่วย) เก็บในเครื่อง
   var TOKEN_KEY = 'rpt_admin_token';
   var PIN_MIN = 4, PIN_MAX = 12;         // แป้น PIN: ต้องกดอย่างน้อย 4 หลักถึงกดเข้าสู่ระบบได้, สูงสุด 12 หลัก
-  var SUB_TITLES = { home: 'โลโก้และหน้าแรก', systems: 'จัดการระบบ', banners: 'การ์ดแบนเนอร์', contacts: 'ข้อมูลติดต่อ', ann: 'ข้อความวิ่ง และ popup ประกาศ', notif: 'ส่งแจ้งเตือนกระดิ่ง', missions: 'ปฏิทินภารกิจ', docs: 'เอกสารดาวน์โหลด', stats: 'สถิติการใช้งาน' };
-  var DELETE_FN = { systems: 'deleteSystem', banners: 'deleteBanner', contacts: 'deleteContact', announcements: 'deleteAnnouncement', notifications: 'deleteNotification', documents: 'deleteDocument', missions: 'deleteMission' };
+  var SUB_TITLES = { home: 'โลโก้และหน้าแรก', systems: 'จัดการระบบ', banners: 'การ์ดแบนเนอร์', contacts: 'ข้อมูลติดต่อ', ann: 'ข้อความวิ่ง และ popup ประกาศ', notif: 'ส่งแจ้งเตือนกระดิ่ง', missions: 'ปฏิทินภารกิจ', docs: 'หนังสือและเอกสาร', units: 'หน่วยผู้รับ', stats: 'สถิติการใช้งาน' };
+  var DELETE_FN = { systems: 'deleteSystem', banners: 'deleteBanner', contacts: 'deleteContact', announcements: 'deleteAnnouncement', notifications: 'deleteNotification', documents: 'deleteDocument', missions: 'deleteMission', units: 'deleteUnit' };
   var MENU = [
     { key: 'home', icon: 'dashboard_customize', title: 'โลโก้และหน้าแรก' },
     { key: 'systems', icon: 'apps', title: 'จัดการระบบ' },
@@ -44,7 +54,8 @@
     { key: 'ann', icon: 'campaign', title: 'ข้อความวิ่ง และ popup ประกาศ' },
     { key: 'notif', icon: 'notifications_active', title: 'ส่งแจ้งเตือนกระดิ่ง' },
     { key: 'missions', icon: 'event', title: 'ปฏิทินภารกิจ' },
-    { key: 'docs', icon: 'folder_open', title: 'เอกสารดาวน์โหลด' },
+    { key: 'docs', icon: 'folder_open', title: 'หนังสือและเอกสาร' },
+    { key: 'units', icon: 'groups', title: 'หน่วยผู้รับ' },
     { key: 'stats', icon: 'insights', title: 'สถิติการใช้งาน' }
   ];
 
@@ -54,6 +65,7 @@
     popupShown: false, statsDays: 30, statsData: null, statsSeq: 0, statsError: false,
     offlineToastShown: false, configError: '',
     seenAdmin: {},   // ภารกิจ admin ที่เห็นแล้ว เก็บในหน่วยความจำเท่านั้น (ไม่ลง localStorage กัน id รั่วบนเครื่อง)
+    docFilter: null, // ตัวกรองหน้าเอกสาร: 'mine' (ของหน่วยฉัน) | 'all' | null = ค่าเริ่มต้น (เลือกหน่วยแล้ว = mine)
     cal: null, calFrom: 'home', mFilter: null, todayKey: ''     // ปฏิทินภารกิจ: เดือนที่เปิด/หน้าที่มา/เดือนที่กรองในหน้า admin/วันที่ (ไทย) ล่าสุดที่นาฬิกาเห็น
   };
 
@@ -145,6 +157,11 @@
     var t = new Date(Date.UTC(p.y, p.m - 1, p.d) + n * 86400000);
     return dateKey(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate());
   }
+  /** จำนวนวันระหว่างสองวันที่ (b - a) */
+  function diffDays(a, b) {
+    var pa = parseKey(a), pb = parseKey(b);
+    return Math.round((Date.UTC(pb.y, pb.m - 1, pb.d) - Date.UTC(pa.y, pa.m - 1, pa.d)) / 86400000);
+  }
   function dowOfKey(k) { var p = parseKey(k); return new Date(Date.UTC(p.y, p.m - 1, p.d)).getUTCDay(); }
   function daysInMonth(y, m) { return new Date(Date.UTC(y, m, 0)).getUTCDate(); }
   /** วันที่แบบสั้นไม่มีปี เช่น 17 พ.ย. */
@@ -153,6 +170,15 @@
   function fmtDayLong(k) {
     var p = parseKey(k);
     return p ? 'วัน' + TH_DAYS[dowOfKey(k)] + 'ที่ ' + p.d + ' ' + TH_MONTHS_FULL[p.m - 1] + ' ' + (p.y + 543) : '';
+  }
+  /** ช่วงวันที่แบบสั้น เช่น 14-20 พ.ย. 69 / 28 พ.ย. - 3 ธ.ค. 69 / ข้ามปีแสดงปีทั้งสองข้าง (ปี พ.ศ. 2 หลัก) */
+  function fmtRange(a, b) {
+    var pa = parseKey(a), pb = parseKey(b);
+    if (!pa || !pb) return '';
+    function yy(p) { return ('0' + ((p.y + 543) % 100)).slice(-2); }
+    if (pa.y === pb.y && pa.m === pb.m) return pa.d + '-' + pb.d + ' ' + TH_MONTHS[pa.m - 1] + ' ' + yy(pa);
+    if (pa.y === pb.y) return pa.d + ' ' + TH_MONTHS[pa.m - 1] + ' - ' + pb.d + ' ' + TH_MONTHS[pb.m - 1] + ' ' + yy(pa);
+    return pa.d + ' ' + TH_MONTHS[pa.m - 1] + ' ' + yy(pa) + ' - ' + pb.d + ' ' + TH_MONTHS[pb.m - 1] + ' ' + yy(pb);
   }
   /** ป้ายวันของภารกิจ: วันนี้ / พรุ่งนี้ / วันที่สั้น */
   function dayLabel(k, today) {
@@ -447,6 +473,7 @@
     $('keyIcon').textContent = admin ? 'admin_panel_settings' : 'vpn_key';
     $('keyBtn').classList.toggle('admin-on', admin);
     $('keyBtn').setAttribute('aria-label', admin ? 'โหมด admin' : 'เข้าโหมด admin');
+    renderHdrVer();
     // โลโก้: ถ้า admin อัปโหลดไว้แสดงรูป ไม่มีใช้ไอคอนโล่
     var id = safeFileId(state.data && state.data.home ? state.data.home.logoFileId : '');
     var logo = $('hdrLogo');
@@ -473,17 +500,26 @@
   }
 
   // ===== ภารกิจ (ปฏิทินเตือนภารกิจ) =====
+  /** วันสิ้นสุดห้วงที่ปลอดภัย: ว่าง/ผิดรูปแบบ/ไม่เกินวันเริ่ม = '' (วันเดียว), ยาวเกิน 90 วัน = ตัดเหลือ 90 วัน (ตรงกับ server) */
+  function cleanEndKey(date, end) {
+    if (!isRealKey(date) || !isRealKey(end)) return '';
+    var n = diffDays(date, end);
+    if (n <= 0) return '';
+    return n + 1 > MISSION_MAX_SPAN ? shiftKey(date, MISSION_MAX_SPAN - 1) : end;
+  }
   /** ทำความสะอาดภารกิจจากหลังบ้านก่อนนำไปแสดง (ค่าผิดรูปแบบ → ตัดทิ้ง/ใช้ค่าเริ่มต้น) adminOnly = เห็นเฉพาะ admin */
   function cleanMission(m, adminOnly) {
     if (!m || typeof m !== 'object' || !isRealKey(m.date)) return null;
     return {
-      id: String(m.id == null ? '' : m.id), title: String(m.title == null ? '' : m.title), date: m.date,
+      id: String(m.id == null ? '' : m.id), title: String(m.title == null ? '' : m.title), date: m.date, endDate: cleanEndKey(m.date, m.endDate),
       time: /^([01]\d|2[0-3]):[0-5]\d$/.test(m.time || '') ? m.time : '',
       place: String(m.place == null ? '' : m.place), owner: String(m.owner == null ? '' : m.owner),
       category: MISSION_CATS.indexOf(m.category) >= 0 ? m.category : 'อื่นๆ',
       color: safeHex(m.color) || MISSION_COLOR_DEFAULT, detail: String(m.detail == null ? '' : m.detail), adminOnly: !!adminOnly
     };
   }
+  function mEnd(m) { return m.endDate || m.date; }                 // วันสุดท้ายของภารกิจ (วันเดียว = วันเริ่ม)
+  function mSpan(m) { return diffDays(m.date, mEnd(m)) + 1; }      // จำนวนวันรวมของภารกิจ
   function byDateTime(a, b) {
     if (a.date !== b.date) return a.date < b.date ? -1 : 1;
     if (a.time !== b.time) return a.time < b.time ? -1 : 1;
@@ -512,10 +548,111 @@
     var n = Number(isAdmin() && state.admin && state.admin.settings ? state.admin.settings.missionLeadDays : (state.data ? state.data.missionLeadDays : 1));
     return n >= 1 && n <= 7 && Math.floor(n) === n ? n : 1;
   }
-  /** ภารกิจตั้งแต่วันนี้ถึงวันนี้ + จำนวนวันเตือนล่วงหน้า เรียงวัน/เวลา */
-  function upcomingMissions() {
-    var t = todayKey(), end = shiftKey(t, leadDays());
-    return missionsAll().filter(function (m) { return m.date >= t && m.date <= end; });
+
+  // ----- หนังสือแจ้งเตือน / หน่วยผู้รับ (ฝั่งผู้ใช้) -----
+  /** ทำความสะอาดหนังสือจากหลังบ้าน (เอกสารเดิมที่ไม่มีฟิลด์ใหม่ = ค่าว่าง/ปกติ) */
+  function cleanDoc(d) {
+    var rec = [], dls = [], seenKey = Object.create(null);
+    (Array.isArray(d.recipients) ? d.recipients : []).forEach(function (x) {
+      if (typeof x === 'string' && /^(ALL|GROUP:.{1,20}|[A-Za-z0-9-]{1,40})$/.test(x) && rec.indexOf(x) < 0) rec.push(x);
+    });
+    (Array.isArray(d.deadlines) ? d.deadlines : []).forEach(function (x) {
+      if (!x || typeof x !== 'object' || !isRealKey(x.date)) return;
+      var time = /^([01]\d|2[0-3]):[0-5]\d$/.test(x.time || '') ? x.time : '';
+      if (seenKey[x.date + ' ' + time]) return;
+      seenKey[x.date + ' ' + time] = true;
+      dls.push({ date: x.date, time: time });
+    });
+    dls.sort(function (a, b) { return a.date === b.date ? (a.time < b.time ? -1 : (a.time > b.time ? 1 : 0)) : (a.date < b.date ? -1 : 1); });
+    return {
+      id: String(d.id == null ? '' : d.id), name: String(d.name == null ? '' : d.name), fileType: String(d.fileType || ''), url: String(d.url || ''),
+      createdAt: String(d.createdAt || ''), owner: String(d.owner || ''), docNo: String(d.docNo || ''), docDate: isRealKey(d.docDate) ? d.docDate : '',
+      speed: DOC_SPEEDS.indexOf(d.speed) >= 0 ? d.speed : 'ปกติ', recipients: rec, detail: String(d.detail || ''), deadlines: dls
+    };
+  }
+  function docsAll() {
+    return ((state.data && state.data.documents) || []).map(cleanDoc).filter(function (d) { return !!d.id; });
+  }
+  function unitsAll() {
+    var out = [];
+    ((state.data && state.data.units) || []).forEach(function (u) {
+      if (u && typeof u === 'object' && u.id && u.name) out.push({ id: String(u.id), name: String(u.name), group: UNIT_GROUPS.indexOf(u.group) >= 0 ? u.group : 'อื่นๆ' });
+    });
+    return out;
+  }
+  /** หน่วยของฉัน (เก็บ id ในเครื่อง) ไม่พบในรายการหน่วยที่แสดงอยู่ = ถือว่ายังไม่เลือก */
+  function myUnit() {
+    var id = lsGet(MY_UNIT_KEY);
+    if (!id) return null;
+    var us = unitsAll();
+    for (var i = 0; i < us.length; i++) if (us[i].id === id) return us[i];
+    return null;
+  }
+  /** หนังสือถึงหน่วยนี้: ผู้รับมี ALL หรือ id หน่วยนั้น หรือกลุ่มของหน่วยนั้น */
+  function docIsFor(d, u) {
+    return d.recipients.indexOf('ALL') >= 0 || d.recipients.indexOf(u.id) >= 0 || d.recipients.indexOf('GROUP:' + u.group) >= 0;
+  }
+  /** หนังสือที่ต้องใช้เตือน: เลือกหน่วยของฉันแล้ว = เฉพาะถึงหน่วยฉัน ยังไม่เลือก = ทั้งหมด */
+  function docsForMe() {
+    var u = myUnit(), all = docsAll();
+    return u ? all.filter(function (d) { return docIsFor(d, u); }) : all;
+  }
+  /** กำหนดส่งทุกรายการของหนังสือที่ให้มา (แตกเป็นรายการละหนึ่งกำหนดส่ง) */
+  function deadlineEvents(docs) {
+    var out = [];
+    docs.forEach(function (d) {
+      d.deadlines.forEach(function (x) { out.push({ docId: d.id, title: d.name, owner: d.owner, date: x.date, time: x.time }); });
+    });
+    return out;
+  }
+  /** ข้อความหลัง "ถึง:" แปลง id หน่วยเป็นชื่อ (หน่วยที่ถูกซ่อน/ลบแล้วไม่แสดง) */
+  function recipientsText(d) {
+    var byId = Object.create(null), names = [];
+    unitsAll().forEach(function (u) { byId[u.id] = u.name; });
+    d.recipients.forEach(function (r) {
+      if (r === 'ALL') names.push('ทุกหน่วย');
+      else if (r.indexOf('GROUP:') === 0) { if (UNIT_GROUPS.indexOf(r.slice(6)) >= 0) names.push(r.slice(6) + ' ทั้งหมด'); }
+      else if (byId[r]) names.push(byId[r]);
+    });
+    return names.join(', ');
+  }
+  /** "อีก N วัน" / "วันนี้" / "เลยกำหนด N วัน" ตามวันที่ไทย */
+  function relDays(date, today) {
+    var n = diffDays(today, date);
+    return n > 0 ? 'อีก ' + n + ' วัน' : (n === 0 ? 'วันนี้' : 'เลยกำหนด ' + (-n) + ' วัน');
+  }
+  /** เวลากำหนดส่งแบบไทย 16.30 น. (ไม่ระบุ = ว่าง) */
+  function dlTimeText(t) { return /^\d{2}:\d{2}$/.test(t || '') ? t.replace(':', '.') + ' น.' : ''; }
+
+  // ----- รายการใกล้ถึง (ภารกิจ + ห้วงที่กำลังอยู่ + กำหนดส่ง) -----
+  /**
+   * รายการใกล้ถึงตั้งแต่วันนี้ถึงวันนี้ + จำนวนวันเตือนล่วงหน้า:
+   *  - ภารกิจที่เริ่มในช่วงนี้ และห้วงที่ "กำลังอยู่" (เริ่มแล้วยังไม่จบ)
+   *  - กำหนดส่งรายงานของหนังสือ (เลือกหน่วยของฉันแล้ว = เฉพาะถึงหน่วยฉัน)
+   * เรียง: วันนี้/อยู่ในห้วงก่อน แล้วตามวัน-เวลา  key = ใช้จำว่าเห็นแล้ว (ห้วงและกำหนดส่งผูกกับ "วันนี้" จึงเตือนซ้ำทุกวัน)
+   */
+  function upcomingItems() {
+    var t = todayKey(), end = shiftKey(t, leadDays()), out = [];
+    missionsAll().forEach(function (m) {
+      if (mEnd(m) < t || m.date > end) return;
+      var prog = !!m.endDate && m.date <= t;
+      out.push({
+        kind: 'm', m: m, date: m.date, time: m.time, prog: prog, dayNo: prog ? diffDays(m.date, t) + 1 : 0, first: prog || m.date === t,
+        key: prog ? 'r:' + m.id + ':' + t : 'm:' + m.id + ':' + m.date, expire: prog ? t : m.date, adminOnly: m.adminOnly
+      });
+    });
+    deadlineEvents(docsForMe()).forEach(function (e) {
+      if (e.date < t || e.date > end) return;
+      out.push({ kind: 'd', e: e, date: e.date, time: e.time, first: e.date === t, key: 'd:' + e.docId + ':' + e.date + ':' + e.time + ':' + t, expire: t, adminOnly: false });
+    });
+    out.sort(function (a, b) {
+      if (a.first !== b.first) return a.first ? -1 : 1;
+      if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+      if (a.time !== b.time) return a.time < b.time ? -1 : 1;
+      if (a.kind !== b.kind) return a.kind === 'm' ? -1 : 1;
+      return 0;
+    });
+    return out;
   }
   function getSeenMissions() {
     try {
@@ -523,39 +660,60 @@
       return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
     } catch (e) { return {}; }
   }
+  /** true = รายการนี้เคยเห็นแล้ว (รายการของ admin เช็กกับหน่วยความจำ, รายการสาธารณะเช็กกับ localStorage) */
+  function itemSeen(it, seen) {
+    return !!(it.adminOnly ? state.seenAdmin : seen)[it.key];
+  }
   function unseenMissions() {
     var seen = getSeenMissions();
-    // ภารกิจ admin เช็กกับหน่วยความจำ, ภารกิจสาธารณะเช็กกับ localStorage
-    return upcomingMissions().filter(function (m) { return (m.adminOnly ? state.seenAdmin : seen)[m.id] !== m.date; });
+    return upcomingItems().filter(function (it) { return !itemSeen(it, seen); });
   }
-  /** จดว่าเห็นภารกิจใกล้ถึงแล้ว (เปิดหน้าแจ้งเตือน) เก็บเฉพาะรายการที่ยังไม่ผ่านวัน กันข้อมูลบวม */
+  /** จดว่าเห็นรายการใกล้ถึงแล้ว (เปิดหน้าแจ้งเตือน) เก็บเฉพาะรายการที่ยังไม่หมดความหมาย กันข้อมูลบวม */
   function markMissionsSeen() {
     var old = getSeenMissions(), today = todayKey(), next = {}, n = 0;
-    Object.keys(old).forEach(function (id) {
-      if (typeof old[id] === 'string' && old[id] >= today && n < 300) { next[id] = old[id]; n++; }
+    Object.keys(old).forEach(function (k) {
+      if (typeof old[k] === 'string' && old[k] >= today && n < 300) { next[k] = old[k]; n++; }
     });
-    upcomingMissions().forEach(function (m) {
-      if (m.adminOnly) state.seenAdmin[m.id] = m.date;   // ภารกิจ admin ไม่ลงเครื่อง
-      else next[m.id] = m.date;
+    upcomingItems().forEach(function (it) {
+      if (it.adminOnly) state.seenAdmin[it.key] = it.expire;   // ภารกิจ admin ไม่ลงเครื่อง
+      else next[it.key] = it.expire;
     });
     lsSet(MISSION_SEEN_KEY, JSON.stringify(next));
   }
-  /** แถวภารกิจแบบย่อ (หน้าแรก/หน้าแจ้งเตือน) แตะแล้วเปิดปฏิทินที่วันนั้น */
-  function missionRowHtml(m, unseen) {
-    var lb = dayLabel(m.date, todayKey());
-    var sub = [timeText(m.time), m.place].filter(function (x) { return !!x; }).join(' · ');
-    return '<button type="button" class="m-row" style="--mc:' + m.color + '" data-act="cal-open" data-date="' + m.date + '">' +
-      '<span class="m-day' + (lb.cls ? ' ' + lb.cls : '') + '">' + esc(lb.text) + '</span>' +
-      '<span class="m-txt"><span class="m-t">' + (unseen ? '<span class="dot" aria-label="ใหม่"></span>' : '') + esc(m.title) + '</span><span class="m-s">' + esc(sub) + '</span></span>' +
+  /** แถวรายการใกล้ถึงแบบย่อ (หน้าแรก/หน้าแจ้งเตือน): ภารกิจแตะแล้วเปิดปฏิทินที่วันนั้น, กำหนดส่งแตะแล้วเปิดการ์ดหนังสือ */
+  function missionRowHtml(it, unseen) {
+    var today = todayKey();
+    var dot = unseen ? '<span class="dot" aria-label="ใหม่"></span>' : '';
+    if (it.kind === 'd') {
+      var e = it.e, lb = dayLabel(e.date, today);
+      var sub = [e.time ? 'ภายใน ' + dlTimeText(e.time) : 'ไม่ระบุเวลา', e.owner].filter(function (x) { return !!x; }).join(' · ');
+      return '<button type="button" class="m-row dl" data-act="bk-open" data-id="' + esc(e.docId) + '">' +
+        '<span class="m-day' + (lb.cls ? ' ' + lb.cls : '') + '">' + esc(lb.text) + '</span>' +
+        '<span class="m-txt"><span class="m-t">' + dot + 'กำหนดส่ง: ' + esc(e.title) + '</span><span class="m-s">' + esc(sub) + '</span></span>' +
+        '<span class="mi m-alarm" role="img" aria-label="กำหนดส่งรายงาน">alarm</span></button>';
+    }
+    var m = it.m, dayCell, parts;
+    if (it.prog) {
+      dayCell = '<span class="m-day prog">ห้วง</span>';
+      parts = ['อยู่ในห้วง วันที่ ' + it.dayNo + '/' + mSpan(m), fmtRange(m.date, m.endDate), m.time ? timeText(m.time) : '', m.place];
+    } else {
+      var lb2 = dayLabel(m.date, today);
+      dayCell = '<span class="m-day' + (lb2.cls ? ' ' + lb2.cls : '') + '">' + esc(lb2.text) + '</span>';
+      parts = [timeText(m.time), m.place];
+      if (m.endDate) parts.splice(1, 0, 'ห้วง ' + fmtRange(m.date, m.endDate));
+    }
+    var sub2 = parts.filter(function (x) { return !!x; }).join(' · ');
+    return '<button type="button" class="m-row' + (it.prog ? ' prog' : '') + '" style="--mc:' + m.color + '" data-act="cal-open" data-date="' + (it.prog ? today : m.date) + '">' +
+      dayCell + '<span class="m-txt"><span class="m-t">' + dot + esc(m.title) + '</span><span class="m-s">' + esc(sub2) + '</span></span>' +
       (m.adminOnly ? '<span class="mi m-lock" role="img" aria-label="เฉพาะ admin">lock</span>' : '') + '</button>';
   }
-  /** การ์ดขาว "ภารกิจใกล้ถึง" บนหน้าแรก (สูงสุด 3 รายการ) ไม่มีภารกิจ = ซ่อนทั้งใบ */
+  /** การ์ดขาว "ภารกิจใกล้ถึง" บนหน้าแรก (สูงสุด 3 รายการ) ไม่มีรายการ = ซ่อนทั้งใบ */
   function renderMissionCard() {
     var card = $('missionCard');
-    var list = upcomingMissions().slice(0, 3);
+    var list = upcomingItems().slice(0, 3);
     if (!list.length) { card.hidden = true; $('missionList').innerHTML = ''; return; }
     card.hidden = false;
-    $('missionList').innerHTML = list.map(function (m) { return missionRowHtml(m, false); }).join('');
+    $('missionList').innerHTML = list.map(function (it) { return missionRowHtml(it, false); }).join('');
   }
 
   function renderTicker() {
@@ -704,15 +862,107 @@
     grid.innerHTML = html;
   }
 
-  function docRowHtml(d) {
-    var m = fileMeta(d.fileType);
-    return '<div class="row"><span class="lead" style="background:' + m.color + '">' + mi(m.icon) + '</span>' +
-      '<div class="row-txt"><div class="row-t">' + esc(d.name) + '</div><div class="row-s">' + esc(m.label) + (d.createdAt ? ' · ' + esc(fmtDate(d.createdAt)) : '') + '</div></div>' +
-      '<button class="dl-btn" data-act="dl-doc" data-id="' + esc(d.id) + '" aria-label="ดาวน์โหลด ' + esc(d.name) + '">' + mi('download') + '</button></div>';
+  // ----- การ์ดหนังสือ (หน้าเอกสาร / เปิดจากกำหนดส่งในปฏิทิน) -----
+  var BK_FOLD_LINES = 3;                    // รายละเอียดเกินกี่ข้อให้พับเก็บ
+  /** การ์ดหนังสือ: ป้ายชั้นความเร็ว, หนังสือของ·เลขที่·วันที่, ชื่อเรื่อง, ถึง, รายละเอียดเป็นข้อ, กล่องกำหนดส่ง, ปุ่ม ดาวน์โหลด/ดูในปฏิทิน */
+  function bookCardHtml(d, inModal) {
+    var fm = fileMeta(d.fileType), today = todayKey();
+    var sp = DOC_SPEEDS.indexOf(d.speed);
+    var meta = [d.owner, d.docNo, d.docDate ? fmtDate(d.docDate) : ''].filter(function (x) { return !!x; }).join(' · ');
+    if (!meta && d.createdAt) meta = 'เพิ่มเมื่อ ' + fmtDate(d.createdAt);
+    var to = recipientsText(d);
+    var lines = d.detail.split(/\r?\n/).map(function (x) { return x.trim(); }).filter(function (x) { return !!x; });
+    var fold = lines.length > BK_FOLD_LINES;
+    var h = '<article class="bk-card' + (inModal ? ' in-modal' : '') + (fold ? ' fold' : '') + '" data-id="' + esc(d.id) + '">' +
+      '<div class="bk-top"><span class="bk-speed s' + sp + '">' + esc(d.speed) + '</span>' + (meta ? '<span class="bk-meta">' + esc(meta) + '</span>' : '') + '</div>' +
+      '<h3 class="bk-title">' + esc(d.name) + '</h3>' +
+      (to ? '<p class="bk-to"><b>ถึง:</b> ' + esc(to) + '</p>' : '');
+    if (lines.length) {
+      h += '<ol class="bk-ol">' + lines.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol>';
+      if (fold) h += '<button type="button" class="link-btn bk-more" data-act="bk-more" aria-expanded="false" data-n="' + lines.length + '"><span class="bk-more-t">ดูทั้งหมด (' + lines.length + ' ข้อ)</span>' + mi('expand_more') + '</button>';
+    }
+    if (d.deadlines.length) {
+      h += '<div class="bk-dl"><div class="bk-dl-h">' + mi('alarm') + '<span>กำหนดส่งรายงาน</span></div>' + d.deadlines.map(function (x) {
+        var n = diffDays(today, x.date);
+        return '<div class="bk-dl-row' + (n < 0 ? ' over' : (n === 0 ? ' today' : '')) + '"><span>' + esc(fmtDate(x.date) + (x.time ? ' เวลา ' + dlTimeText(x.time) : '')) + '</span><span class="rel">' + esc(relDays(x.date, today)) + '</span></div>';
+      }).join('') + '</div>';
+    }
+    var acts = '';
+    if (safeUrl(d.url)) {
+      var isLink = fm.label === 'ลิงค์';
+      acts += '<button type="button" class="btn btn-primary" data-act="dl-doc" data-id="' + esc(d.id) + '" aria-label="' + (isLink ? 'เปิดลิงค์ ' : 'ดาวน์โหลด ') + esc(d.name) + '">' + mi(isLink ? 'link' : 'download') +
+        '<span>' + (isLink ? 'เปิดลิงค์' : 'ดาวน์โหลด ' + esc(fm.label)) + '</span></button>';
+    }
+    if (d.deadlines.length) {
+      var near = d.deadlines[d.deadlines.length - 1].date;               // ใกล้ที่สุด: กำหนดส่งแรกที่ยังไม่ผ่าน ถ้าผ่านหมดแล้วใช้รายการล่าสุด
+      for (var i = 0; i < d.deadlines.length; i++) if (d.deadlines[i].date >= today) { near = d.deadlines[i].date; break; }
+      acts += '<button type="button" class="btn btn-outline" data-act="bk-cal" data-date="' + near + '">' + mi('calendar_month') + '<span>ดูในปฏิทิน</span></button>';
+    }
+    if (acts) h += '<div class="bk-acts">' + acts + '</div>';
+    return h + '</article>';
   }
-  function renderVersion() {
-    var v = state.data && state.data.version ? ' ' + state.data.version : '';
-    $('verLine').textContent = 'รวมระบบงาน ป.' + v;
+  /** เปิดการ์ดหนังสือเป็นหน้าต่าง (แตะกำหนดส่งในปฏิทิน/การ์ดภารกิจใกล้ถึง) */
+  function openBookModal(id) {
+    var d = null, all = docsAll();
+    for (var i = 0; i < all.length; i++) if (all[i].id === id) d = all[i];
+    if (!d) { toast('ไม่พบหนังสือนี้ (อาจถูกลบหรือซ่อนแล้ว)', 'info', 3000); return; }
+    openModal({
+      title: 'หนังสือแจ้งเตือน', icon: 'description', body: bookCardHtml(d, true),
+      actions: [{ label: 'ปิด', cls: 'btn-outline', onClick: function (h) { h.close(); } }]
+    });
+  }
+  /** กล่อง "หน่วยของฉัน" บนหน้าเอกสาร + ตัวกรอง ของหน่วยฉัน/ทั้งหมด */
+  function myUnitBarHtml(u, mode) {
+    var h = '<button type="button" class="myunit" data-act="my-unit"><span class="lead">' + mi('groups') + '</span><span class="row-txt"><span class="mu-t">หน่วยของฉัน</span>' +
+      '<span class="mu-v">' + (u ? esc(u.name) : 'ยังไม่ได้เลือก (แตะเพื่อเลือก)') + '</span></span>' + mi('chevron_right') + '</button>';
+    if (u) {
+      h += '<div class="seg" role="group" aria-label="ตัวกรองหนังสือ"><button type="button" data-act="doc-filter" data-f="mine" aria-pressed="' + (mode === 'mine') + '"' + (mode === 'mine' ? ' class="on"' : '') + '>ของหน่วยฉัน</button>' +
+        '<button type="button" data-act="doc-filter" data-f="all" aria-pressed="' + (mode === 'all') + '"' + (mode === 'all' ? ' class="on"' : '') + '>ทั้งหมด</button></div>';
+    }
+    return h;
+  }
+  /** หน้าต่างเลือกหน่วยของฉัน (เก็บ id ในเครื่อง) */
+  function openMyUnitModal() {
+    var us = unitsAll();
+    if (!us.length) { toast('ยังไม่มีรายการหน่วยให้เลือก', 'info'); return; }
+    var cur = myUnit(), h = '<div class="card-list">';
+    h += '<button type="button" class="row" data-unit=""><span class="lead" style="background:#8AA3BD">' + mi('close') + '</span><span class="row-txt"><span class="row-t">ไม่เลือกหน่วย</span></span>' + (cur ? '' : mi('check')) + '</button>';
+    UNIT_GROUPS.forEach(function (g) {
+      var list = us.filter(function (u) { return u.group === g; });
+      if (!list.length) return;
+      h += '<div class="u-grp">' + esc(g) + '</div>' + list.map(function (u) {
+        return '<button type="button" class="row" data-unit="' + esc(u.id) + '"><span class="lead" style="background:#1A4FA8">' + mi('groups') + '</span><span class="row-txt"><span class="row-t">' + esc(u.name) +
+          '</span></span>' + (cur && cur.id === u.id ? mi('check') : '') + '</button>';
+      }).join('');
+    });
+    var m = openModal({ title: 'เลือกหน่วยของฉัน', icon: 'groups', body: h + '</div>' });
+    m.body.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('[data-unit]') : null;
+      if (!b) return;
+      var id = b.getAttribute('data-unit');
+      if (id) lsSet(MY_UNIT_KEY, id); else lsDel(MY_UNIT_KEY);
+      state.docFilter = null;
+      m.close();
+      renderDocsView(); renderMissionCard(); updateBadges();
+      if (state.view === 'notif') renderNotifView();
+      toast(id ? 'ตั้งเป็นหน่วยของฉันแล้ว' : 'ยกเลิกหน่วยของฉันแล้ว', 'success', 1800);
+    });
+  }
+  /** เลขเวอร์ชันสั้น (เช่น v3.2) ต่อท้ายชื่อระบบบน header; ข้อมูลหลังบ้านยังไม่โหลด = ว่าง; title/aria-label เป็นเวอร์ชันเต็มพร้อมวันที่ */
+  function renderHdrVer() {
+    var el = $('hdrVer');
+    if (!el) return;
+    var full = state.data && typeof state.data.version === 'string' ? state.data.version.trim().slice(0, 40) : '';
+    var short = (/^v\d+(?:\.\d+)*/i.exec(full) || [''])[0];
+    el.textContent = short;
+    el.hidden = !short;
+    if (short) {
+      el.setAttribute('title', full);
+      el.setAttribute('aria-label', 'เวอร์ชัน ' + full);
+      el.setAttribute('role', 'img');
+    } else {
+      el.removeAttribute('title'); el.removeAttribute('aria-label'); el.removeAttribute('role');
+    }
   }
 
   // ----- การ์ดวัน/วันที่/นาฬิกา (hero) -----
@@ -807,7 +1057,6 @@
     renderBanners();
     renderMissionCard();
     renderGrid();
-    renderVersion();
   }
 
   // ----- หน้าติดต่อ -----
@@ -831,12 +1080,19 @@
     var q = $('docSearch').value.trim().toLowerCase();
     var box = $('docList');
     if (!state.data) { box.innerHTML = pendingBlock(); return; }
-    var docs = state.data.documents.filter(function (d) { return !q || d.name.toLowerCase().indexOf(q) >= 0; });
+    var all = docsAll(), u = myUnit();
+    var mode = u ? (state.docFilter || 'mine') : 'all';
+    var head = unitsAll().length ? myUnitBarHtml(u, mode) : '';
+    var docs = all.filter(function (d) {
+      if (mode === 'mine' && !docIsFor(d, u)) return false;
+      return !q || (d.name + ' ' + d.docNo + ' ' + d.owner).toLowerCase().indexOf(q) >= 0;
+    });
     if (!docs.length) {
-      box.innerHTML = '<div class="empty">' + mi('folder_open') + (q ? 'ไม่พบเอกสารที่ค้นหา' : 'ยังไม่มีเอกสาร') + '</div>';
+      var msg = q ? 'ไม่พบหนังสือหรือเอกสารที่ค้นหา' : (mode === 'mine' ? 'ยังไม่มีหนังสือถึงหน่วยของคุณ<br><span class="hint">กด "ทั้งหมด" เพื่อดูทุกฉบับ</span>' : 'ยังไม่มีหนังสือหรือเอกสาร');
+      box.innerHTML = head + '<div class="empty">' + mi('folder_open') + msg + '</div>';
       return;
     }
-    box.innerHTML = '<div class="card-list">' + docs.map(docRowHtml).join('') + '</div>';
+    box.innerHTML = head + docs.map(function (d) { return bookCardHtml(d, false); }).join('');
   }
 
   function renderSearchView() {
@@ -862,14 +1118,14 @@
     if (!state.data) { box.innerHTML = pendingBlock(); return; }
     var list = state.data.notifications;
     var read = getReadMap();
-    var up = upcomingMissions();
+    var up = upcomingItems();
     var seen = getSeenMissions();
     var html = '';
     // ส่วน "ภารกิจใกล้ถึง" ด้านบน (ซ่อนเมื่อไม่มี) จุดแดง = ยังไม่เคยเห็น
     if (up.length) {
       html += '<div class="card m-sec"><div class="card-head"><h2>ภารกิจใกล้ถึง</h2>' +
         '<button type="button" class="link-btn" data-act="open-cal"><span>ปฏิทิน</span>' + mi('chevron_right') + '</button></div><div class="m-list">' +
-        up.map(function (m) { return missionRowHtml(m, seen[m.id] !== m.date); }).join('') + '</div></div>';
+        up.map(function (it) { return missionRowHtml(it, !itemSeen(it, seen)); }).join('') + '</div></div>';
     }
     if (!list.length) {
       if (!up.length) html += '<div class="empty">' + mi('notifications_none') + 'ยังไม่มีแจ้งเตือน</div>';
@@ -895,7 +1151,7 @@
     var k = isRealKey(selKey) ? selKey : todayKey();
     var p = parseKey(k);
     state.cal = { y: p.y, m: p.m, sel: k };
-    if (state.view !== 'cal') state.calFrom = state.view === 'notif' ? 'notif' : 'home';
+    if (state.view !== 'cal') state.calFrom = (state.view === 'notif' || state.view === 'docs') ? state.view : 'home';
     showView('cal');
   }
   /** เปลี่ยนเดือนในปฏิทิน: เดือนปัจจุบันเลือกวันนี้ เดือนอื่นเลือกวันที่ 1 */
@@ -907,41 +1163,93 @@
     state.cal = { y: y, m: m, sel: (t.y === y && t.m === m) ? dateKey(y, m, t.d) : dateKey(y, m, 1) };
     renderCalView();
   }
-  function missionDetailHtml(m) {
+  /** รายละเอียดภารกิจของวันที่เลือก (k) ห้วงแสดงช่วงวันที่ + "วันที่ N จาก M" */
+  function missionDetailHtml(m, k) {
+    var rng = '';
+    if (m.endDate) rng = '<div class="cm-meta">' + mi('date_range') + '<span>' + esc(fmtRange(m.date, m.endDate) + ' · วันที่ ' + (diffDays(m.date, k) + 1) + ' จาก ' + mSpan(m)) + '</span></div>';
     return '<div class="cm-item" style="--mc:' + m.color + '"><div class="cm-time">' + esc(timeText(m.time)) + '</div><div class="cm-body">' +
-      '<div class="cm-t">' + esc(m.title) + '</div>' +
+      '<div class="cm-t">' + esc(m.title) + '</div>' + rng +
       (m.place ? '<div class="cm-meta">' + mi('place') + '<span>' + esc(m.place) + '</span></div>' : '') +
       (m.owner ? '<div class="cm-meta">' + mi('person') + '<span>' + esc(m.owner) + '</span></div>' : '') +
       (m.detail ? '<div class="cm-detail">' + esc(m.detail) + '</div>' : '') +
       '<span class="cm-chip">' + esc(m.category) + (m.adminOnly ? ' · ' + mi('lock') + 'เฉพาะ admin' : '') + '</span></div></div>';
   }
+  /** กำหนดส่งรายงานของวันที่เลือก: แตะแล้วเปิดการ์ดหนังสือ */
+  function deadlineDetailHtml(e) {
+    return '<button type="button" class="cm-item cm-dl" style="--mc:' + DEADLINE_COLOR + '" data-act="bk-open" data-id="' + esc(e.docId) + '">' +
+      '<div class="cm-time">' + esc(e.time ? dlTimeText(e.time) : 'ทั้งวัน') + '</div><div class="cm-body">' +
+      '<div class="cm-t">' + mi('alarm', 'cm-alarm') + ' กำหนดส่ง: ' + esc(e.title) + '</div>' +
+      (e.owner ? '<div class="cm-meta">' + mi('description') + '<span>' + esc(e.owner) + '</span></div>' : '') +
+      '<span class="cm-chip">แตะเพื่อดูหนังสือ</span></div></button>';
+  }
+  /**
+   * ปฏิทินรายเดือน: วันเดียว = จุดสี, ห้วง = แถบสีต่อกันใต้เลขวัน (หัวมนวันแรก ท้ายมนวันสุดท้าย ตัดต่อตามแถวสัปดาห์),
+   * กำหนดส่ง = จุดแดง (ข้อสี่เหลี่ยมขนมเปียกปูน) วันหนึ่งแสดงได้สูงสุด 5 รายการ เกินแสดง "+N"
+   */
   function renderCalView() {
     var box = $('calBody');
     if (!state.data) { box.innerHTML = pendingBlock(); return; }
     if (!state.cal) { var tp = parseKey(todayKey()); state.cal = { y: tp.y, m: tp.m, sel: todayKey() }; }
     var cal = state.cal, today = todayKey();
     var first = dowOfKey(dateKey(cal.y, cal.m, 1)), total = daysInMonth(cal.y, cal.m);
-    var all = missionsAll();
-    var byDay = {};
-    all.forEach(function (m) { (byDay[m.date] = byDay[m.date] || []).push(m); });
+    var mFirst = dateKey(cal.y, cal.m, 1), mLast = dateKey(cal.y, cal.m, total);
+    var all = missionsAll(), dls = deadlineEvents(docsForMe());
+    var singles = {}, ranges = [], dlBy = {};
+    all.forEach(function (m) {
+      if (m.date > mLast || mEnd(m) < mFirst) return;
+      if (m.endDate) ranges.push(m); else (singles[m.date] = singles[m.date] || []).push(m);
+    });
+    dls.forEach(function (e) { if (e.date >= mFirst && e.date <= mLast) (dlBy[e.date] = dlBy[e.date] || []).push(e); });
+    // จัดช่อง (lane) ของแถบห้วงในแต่ละแถวสัปดาห์ ให้ห้วงเดียวกันอยู่ระดับเดียวกันตลอดแถว
+    var rows = Math.ceil((first + total) / 7), lanes = [], laneCount = [];
+    for (var r = 0; r < rows; r++) {
+      var d0 = r * 7 - first + 1, rf = dateKey(cal.y, cal.m, Math.max(1, d0)), rl = dateKey(cal.y, cal.m, Math.min(total, d0 + 6));
+      var inRow = ranges.filter(function (m) { return m.date <= rl && mEnd(m) >= rf; }).sort(function (a, b) {
+        return (a.date < b.date ? -1 : (a.date > b.date ? 1 : 0)) || (mSpan(b) - mSpan(a)) || (a.id < b.id ? -1 : 1);
+      });
+      var laneEnd = [], assigned = [];
+      inRow.forEach(function (m) {
+        var st = m.date > rf ? m.date : rf, en = mEnd(m) < rl ? mEnd(m) : rl, li = 0;
+        while (li < laneEnd.length && laneEnd[li] >= st) li++;
+        laneEnd[li] = en;
+        assigned.push({ m: m, lane: li });
+      });
+      lanes.push(assigned);
+      laneCount.push(laneEnd.length);
+    }
     var cells = '';
     for (var i = 0; i < first; i++) cells += '<div class="cal-cell blank" aria-hidden="true"></div>';
     for (var d = 1; d <= total; d++) {
-      var k = dateKey(cal.y, cal.m, d);
-      var ms = byDay[k] || [];
-      var dots = ms.slice(0, 3).map(function (m) { return '<i style="--mc:' + m.color + '"></i>'; }).join('');
+      var k = dateKey(cal.y, cal.m, d), row = Math.floor((first + d - 1) / 7);
+      var slot = [], covering = 0, li2, shownBars = 0, bars = '', last = -1;
+      for (li2 = 0; li2 < laneCount[row]; li2++) slot.push(null);
+      lanes[row].forEach(function (a) { if (a.m.date <= k && mEnd(a.m) >= k) { slot[a.lane] = a.m; covering++; } });
+      for (li2 = 0; li2 < Math.min(slot.length, CAL_MAX_ITEMS); li2++) if (slot[li2]) last = li2;
+      for (li2 = 0; li2 <= last; li2++) {
+        var bm = slot[li2];
+        if (!bm) { bars += '<b class="cal-bar sp"></b>'; continue; }
+        shownBars++;
+        bars += '<b class="cal-bar' + (bm.date === k ? ' bs' : '') + (mEnd(bm) === k ? ' be' : '') + '" style="--mc:' + bm.color + '"></b>';
+      }
+      var dots = (singles[k] || []).map(function (m) { return '<i style="--mc:' + m.color + '"></i>'; })
+        .concat((dlBy[k] || []).map(function () { return '<i class="dl" style="--mc:' + DEADLINE_COLOR + '"></i>'; }));
+      var room = Math.max(0, CAL_MAX_ITEMS - shownBars), count = covering + dots.length, more = count - shownBars - Math.min(dots.length, room);
       cells += '<button type="button" class="cal-cell' + (k === today ? ' today' : '') + (k === cal.sel ? ' sel' : '') + '" data-act="cal-day" data-date="' + k + '" aria-pressed="' + (k === cal.sel ? 'true' : 'false') +
-        '" aria-label="' + d + ' ' + TH_MONTHS_FULL[cal.m - 1] + ' ' + (cal.y + 543) + (ms.length ? ' มี ' + ms.length + ' ภารกิจ' : '') + '"><span class="cal-num">' + d + '</span><span class="cal-dots">' + dots + '</span></button>';
+        '" aria-label="' + d + ' ' + TH_MONTHS_FULL[cal.m - 1] + ' ' + (cal.y + 543) + (count ? ' มี ' + count + ' รายการ' : '') + '"><span class="cal-num">' + d + '</span>' +
+        (bars ? '<span class="cal-bars">' + bars + '</span>' : '') + '<span class="cal-dots">' + dots.slice(0, room).join('') + '</span>' +
+        (more > 0 ? '<span class="cal-more">+' + more + '</span>' : '') + '</button>';
     }
     var dow = TH_DAYS_SHORT.map(function (x) { return '<span>' + x + '</span>'; }).join('');
-    var dayList = byDay[cal.sel] || [];
+    var dayMs = all.filter(function (m) { return m.date <= cal.sel && mEnd(m) >= cal.sel; });
+    var dayDl = deadlineEvents(docsForMe()).filter(function (e) { return e.date === cal.sel; });
+    var items = dayMs.map(function (m) { return missionDetailHtml(m, cal.sel); }).join('') + dayDl.map(deadlineDetailHtml).join('');
     var h = '<div class="card cal-card"><div class="cal-head">' +
       '<button type="button" class="cal-nav" data-act="cal-prev" aria-label="เดือนก่อนหน้า">' + mi('chevron_left') + '</button>' +
       '<div class="cal-title" aria-live="polite">' + TH_MONTHS_FULL[cal.m - 1] + ' ' + (cal.y + 543) + '</div>' +
       '<button type="button" class="cal-nav" data-act="cal-next" aria-label="เดือนถัดไป">' + mi('chevron_right') + '</button></div>' +
       '<div class="cal-dow">' + dow + '</div><div class="cal-grid">' + cells + '</div></div>' +
       '<div class="card cal-day-card"><h3>' + esc(fmtDayLong(cal.sel)) + '</h3>' +
-      (dayList.length ? dayList.map(missionDetailHtml).join('') : '<div class="cal-hint" style="text-align:center;padding:14px 16px 18px">ไม่มีภารกิจในวันที่เลือก</div>') +
+      (items || '<div class="cal-hint" style="text-align:center;padding:14px 16px 18px">ไม่มีภารกิจในวันที่เลือก</div>') +
       (isAdmin() ? '' : '<div class="cal-hint">ปฏิทินแสดงภารกิจย้อนหลัง 31 วัน และล่วงหน้า 120 วัน</div>') + '</div>';
     box.innerHTML = h;
   }
@@ -997,12 +1305,21 @@
     } else if (kind === 'missions') {
       o.lead = '<span class="lead" style="background:' + (safeHex(it.color) || MISSION_COLOR_DEFAULT) + '">' + mi(it.visibility === 'public' ? 'event' : 'lock') + '</span>';
       o.title = it.title;
-      o.sub = [fmtDate(it.date), it.time ? timeText(it.time) : 'ทั้งวัน', it.place, it.visibility === 'public' ? '' : 'เฉพาะ admin'].filter(function (x) { return !!x; }).join(' · ');
+      var rEnd = cleanEndKey(it.date, it.endDate);
+      o.sub = [rEnd ? fmtRange(it.date, rEnd) + ' (' + (diffDays(it.date, rEnd) + 1) + ' วัน)' : fmtDate(it.date), it.time ? timeText(it.time) : 'ทั้งวัน', it.place, it.visibility === 'public' ? '' : 'เฉพาะ admin'].filter(function (x) { return !!x; }).join(' · ');
       o.on = it.visible;
     } else if (kind === 'documents') {
-      var m = fileMeta(it.fileType);
+      var dc = cleanDoc(it), hasAtt = !!(it.fileId || it.url);
+      var m = hasAtt ? fileMeta(it.fileType) : { icon: 'description', color: '#5B6F86', label: 'ไม่มีไฟล์แนบ' };
       o.lead = '<span class="lead" style="background:' + m.color + '">' + mi(m.icon) + '</span>';
-      o.title = it.name; o.sub = m.label + ' · ' + (it.fileId ? 'อัปโหลดไฟล์' : 'ลิงค์'); o.on = it.visible; o.move = true;
+      o.title = it.name;
+      o.sub = [dc.speed !== 'ปกติ' ? dc.speed : '', dc.docNo, dc.owner, hasAtt ? m.label + ' · ' + (it.fileId ? 'อัปโหลดไฟล์' : 'ลิงค์') : m.label,
+        dc.deadlines.length ? 'กำหนดส่ง ' + dc.deadlines.length : ''].filter(function (x) { return !!x; }).join(' · ');
+      o.on = it.visible; o.move = true;
+    } else if (kind === 'units') {
+      o.lead = '<span class="lead" style="background:#1A4FA8">' + mi('groups') + '</span>';
+      o.title = it.name; o.sub = 'กลุ่ม ' + (UNIT_GROUPS.indexOf(it.group) >= 0 ? it.group : 'อื่นๆ'); o.on = it.visible; o.move = true;
+      o.flagOn = 'ซ่อน'; o.flagOff = 'แสดง';
     }
     return o;
   }
@@ -1037,7 +1354,8 @@
     else if (k === 'banners') h = addBtn('banners', 'เพิ่มแบนเนอร์') + listHtml('banners', a.banners);
     else if (k === 'contacts') h = addBtn('contacts', 'เพิ่มผู้ติดต่อ') + listHtml('contacts', a.contacts || []);
     else if (k === 'ann') h = addBtn('announcements', 'เพิ่มประกาศ') + listHtml('announcements', a.announcements);
-    else if (k === 'docs') h = addBtn('documents', 'เพิ่มเอกสาร') + listHtml('documents', a.documents);
+    else if (k === 'docs') h = addBtn('documents', 'เพิ่มหนังสือ') + listHtml('documents', a.documents);
+    else if (k === 'units') h = addBtn('units', 'เพิ่มหน่วย') + '<div class="form-card"><div class="hint" style="margin:0">หน่วยที่ซ่อนจะไม่แสดงในรายการเลือกของผู้ใช้ ถ้ามีหนังสือส่งถึงหน่วยแล้วจะลบไม่ได้ ให้ซ่อนแทน</div></div>' + listHtml('units', a.units || []);
     else if (k === 'notif') {
       var oldT = $('nfTitle') ? $('nfTitle').value : '';
       var oldD = $('nfDetail') ? $('nfDetail').value : '';
@@ -1063,7 +1381,8 @@
     var body = $('subBody'), a = state.admin;
     var f = missionFilter();
     var prefix = f.y + '-' + ('0' + f.m).slice(-2);
-    var items = (a.missions || []).filter(function (m) { return String(m.date).slice(0, 7) === prefix; });
+    // รายการที่ช่วงวัน (วันเริ่ม-วันสิ้นสุดของห้วง) ทับกับเดือนที่เลือก
+    var items = (a.missions || []).filter(function (m) { return String(m.date).slice(0, 7) <= prefix && String(cleanEndKey(m.date, m.endDate) || m.date).slice(0, 7) >= prefix; });
     var lead = Number(a.settings && a.settings.missionLeadDays) || 1;
     var opts = '';
     for (var n = 1; n <= 7; n++) opts += '<option value="' + n + '"' + (n === lead ? ' selected' : '') + '>' + n + ' วัน' + (n === 1 ? ' (วันนี้และพรุ่งนี้)' : ' (วันนี้ถึงอีก ' + n + ' วัน)') + '</option>';
@@ -1156,7 +1475,7 @@
     ['home', 'docs', 'search', 'contact', 'notif', 'cal', 'settings', 'sub'].forEach(function (v) {
       $('view-' + v).classList.toggle('active', v === name);
     });
-    var navKey = name === 'sub' ? 'settings' : (name === 'cal' ? 'home' : name);      // หน้าแจ้งเตือนเปิดจากกระดิ่ง ไม่มีปุ่มในเมนูล่าง / ปฏิทินถือเป็นส่วนของหน้าหลัก
+    var navKey = name === 'sub' ? 'settings' : (name === 'cal' ? (state.calFrom === 'docs' ? 'docs' : 'home') : name);      // หน้าแจ้งเตือนเปิดจากกระดิ่ง ไม่มีปุ่มในเมนูล่าง / ปฏิทินถือเป็นส่วนของหน้าหลัก
     var btns = document.querySelectorAll('#bottomNav .nav-b');
     for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-view') === navKey);
     window.scrollTo(0, 0);
@@ -1828,19 +2147,89 @@
     paintType();
   }
 
+  /** รายการเลือก "ถึง": ทุกหน่วย + กลุ่ม + หน่วย (ชิปเลือกได้หลายอัน) คืน {get: รายการที่เลือก (array สำหรับส่ง server)} */
+  function bindRecipientChips(root, units, initial) {
+    var sel = Object.create(null);
+    initial.forEach(function (x) { sel[x] = true; });
+    var chips = root.querySelectorAll('[data-rc]');
+    function paint() {
+      for (var i = 0; i < chips.length; i++) {
+        var on = !!sel[chips[i].getAttribute('data-rc')];
+        chips[i].classList.toggle('on', on);
+        chips[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+    }
+    for (var i = 0; i < chips.length; i++) {
+      chips[i].addEventListener('click', function () {
+        var v = this.getAttribute('data-rc');
+        if (sel[v]) { delete sel[v]; }
+        else {
+          if (v === 'ALL') { sel = Object.create(null); }      // ทุกหน่วย = ล้างตัวเลือกอื่น
+          else delete sel.ALL;                                 // เลือกหน่วย/กลุ่ม = เลิก "ทุกหน่วย"
+          sel[v] = true;
+        }
+        paint();
+      });
+    }
+    paint();
+    return {
+      get: function () {
+        if (sel.ALL) return ['ALL'];
+        var out = [];
+        for (var i = 0; i < chips.length; i++) { var v = chips[i].getAttribute('data-rc'); if (sel[v]) out.push(v); }
+        return out;
+      }
+    };
+  }
+  function recipientChipsHtml(units) {
+    var quick = '<button type="button" class="chip-b quick" data-rc="ALL" aria-pressed="false">ทุกหน่วย</button>';
+    UNIT_GROUPS.forEach(function (g) {
+      if (units.some(function (u) { return u.group === g; })) quick += '<button type="button" class="chip-b quick" data-rc="GROUP:' + esc(g) + '" aria-pressed="false">' + esc(g) + ' ทั้งหมด</button>';
+    });
+    var us = units.map(function (u) { return '<button type="button" class="chip-b" data-rc="' + esc(u.id) + '" aria-pressed="false">' + esc(u.name) + '</button>'; }).join('');
+    return '<div class="chip-set" id="rcQuick">' + quick + '</div>' +
+      (units.length ? '<div class="hint">หรือเลือกเป็นหน่วย</div><div class="chip-set" id="rcUnits">' + us + '</div>' : '<div class="hint">ยังไม่มีหน่วยผู้รับ เพิ่มได้ที่ ตั้งค่า > หน่วยผู้รับ</div>');
+  }
+
+  /**
+   * ฟอร์มเพิ่ม/แก้หนังสือ: หนังสือของ, เลขที่, ลงวันที่ (พ.ศ.), ชั้นความเร็ว, ชื่อเรื่อง, ถึง (ชิปหลายหน่วย), รายละเอียด (1 บรรทัด = 1 ข้อ),
+   * กำหนดส่งรายงาน (วันที่+เวลา สูงสุด 10), ไฟล์แนบ (อัปโหลด/ลิงค์ ไม่บังคับ), แสดงให้ผู้ใช้เห็น
+   */
   function openDocumentForm(id) {
-    var d = id && state.admin ? findIn(state.admin.documents, id) : null;
+    var raw = id && state.admin ? findIn(state.admin.documents, id) : null;
+    var d = raw ? cleanDoc(raw) : null;
+    if (d) { d.visible = !!raw.visible; d.fileId = String(raw.fileId || ''); }
+    var hasAtt = !!(d && (d.fileId || d.url));          // หนังสือที่มีไฟล์/ลิงค์แนบอยู่แล้ว
+    var editLink = !!(d && !d.fileId && d.url);
+    var canAttach = !d || !hasAtt;                       // เพิ่มใหม่ หรือหนังสือที่ยังไม่มีไฟล์แนบ = เลือกแนบไฟล์/ลิงค์ได้
     var mode = 'upload';
     var picked = null;
-    var editLink = d && !d.fileId;
-    var modeHtml = d ? '' : '<div class="fld"><span>วิธีเพิ่มเอกสาร</span><div class="seg" style="margin-bottom:0"><button type="button" data-mode="upload">' +
-      'อัปโหลดไฟล์</button><button type="button" data-mode="link">วางลิงค์</button></div></div>';
+    var units = ((state.admin && state.admin.units) || []).map(function (u) { return { id: String(u.id), name: String(u.name), group: UNIT_GROUPS.indexOf(u.group) >= 0 ? u.group : 'อื่นๆ', visible: !!u.visible }; })
+      .filter(function (u) { return u.visible || (d && d.recipients.indexOf(u.id) >= 0); });
+    var owners = {};
+    ((state.admin && state.admin.documents) || []).forEach(function (x) { if (x.owner) owners[x.owner] = 1; });
+    var modeHtml = canAttach ? '<div class="fld"><span>ไฟล์แนบ (ไม่บังคับ)</span><div class="seg" style="margin-bottom:0"><button type="button" data-mode="upload">อัปโหลดไฟล์</button><button type="button" data-mode="link">วางลิงค์</button></div></div>' : '';
+    var attachHtml = canAttach ?
+      modeHtml + '<div data-wrap="upload"><div class="fld"><button type="button" class="btn btn-outline btn-block" data-pick="1">' + mi('upload_file') + '<span>เลือกไฟล์ (ไม่เกิน 8MB)</span></button>' +
+        '<input type="file" hidden name="docFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt,.zip,.jpg,.jpeg,.png,.webp"><div class="hint" id="docPicked">ยังไม่ได้เลือกไฟล์ (ไม่แนบไฟล์ก็ได้)</div></div></div>' +
+        '<div data-wrap="link" hidden>' + fieldInput('ลิงค์เอกสาร (Google Drive หรือ URL ขึ้นต้น https://)', 'url', { type: 'url', max: 2000, ph: 'https://', inputmode: 'url' }) + '</div>' :
+      (editLink ? fieldInput('ลิงค์เอกสาร (Google Drive หรือ URL ขึ้นต้น https://)', 'url', { type: 'url', max: 2000, ph: 'https://', inputmode: 'url' }) :
+        '<div class="fld"><span>ไฟล์แนบ</span><div class="hint" style="margin:0">' + esc(fileMeta(d.fileType).label) + ' (อัปโหลดไว้แล้ว ถ้าต้องการเปลี่ยนไฟล์ให้ลบหนังสือแล้วเพิ่มใหม่)</div></div>');
     var m = openModal({
-      title: d ? 'แก้ไขเอกสาร' : 'เพิ่มเอกสาร', icon: 'folder_open',
-      body: modeHtml + fieldInput('ชื่อเอกสาร *', 'name', { max: 100 }) +
-        '<div data-wrap="upload"' + (d ? ' hidden' : '') + '><div class="fld"><span>ไฟล์ (ไม่เกิน 8MB)</span><button type="button" class="btn btn-outline btn-block" data-pick="1">' + mi('upload_file') + '<span>เลือกไฟล์</span></button>' +
-        '<input type="file" hidden name="docFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt,.zip,.jpg,.jpeg,.png,.webp"><div class="hint" id="docPicked">ยังไม่ได้เลือกไฟล์</div></div></div>' +
-        '<div data-wrap="link"' + (d && !editLink ? ' hidden' : (d ? '' : ' hidden')) + '>' + fieldInput('ลิงค์เอกสาร (Google Drive หรือ URL ขึ้นต้น https://)', 'url', { type: 'url', max: 2000, ph: 'https://', inputmode: 'url' }) + '</div>' +
+      title: d ? 'แก้ไขหนังสือ' : 'เพิ่มหนังสือ', icon: 'description', focus: '[name=owner]',
+      body: fieldInput('หนังสือของ', 'owner', { max: 40, ph: 'เช่น ฝอ.3 บก.สส.ภ.7', list: 'ownList' }) +
+        '<datalist id="ownList">' + Object.keys(owners).map(function (o) { return '<option value="' + esc(o) + '">'; }).join('') + '</datalist>' +
+        fieldInput('เลขที่หนังสือ', 'docNo', { max: 40, ph: 'เช่น ตช 0012.3/1234' }) +
+        '<div class="fld"><span>ลงวันที่ (ไม่บังคับ)</span>' + dateFieldHtml('ddate') +
+        '<div class="fld-acts"><button type="button" class="btn btn-outline" data-dd-clear="1">' + mi('delete') + '<span>ล้างวันที่</span></button></div></div>' +
+        '<label class="fld"><span>ชั้นความเร็ว</span><select class="inp" name="speed">' + DOC_SPEEDS.map(function (x) { return '<option value="' + x + '">' + x + '</option>'; }).join('') + '</select></label>' +
+        fieldInput('ชื่อเรื่อง *', 'name', { max: 100, ph: 'เช่น ขอให้รายงานผลการปฏิบัติ' }) +
+        '<div class="fld" id="rcWrap"><span>ถึง (เลือกได้หลายหน่วย)</span>' + recipientChipsHtml(units) + '</div>' +
+        '<label class="fld"><span>รายละเอียด (1 บรรทัด = 1 ข้อ)</span><textarea class="inp" name="detail" maxlength="' + DOC_DETAIL_MAX + '" placeholder="พิมพ์ข้อละบรรทัด"></textarea><div class="fld-count" id="bdCount"></div></label>' +
+        '<div class="fld"><span>กำหนดส่งรายงาน (ไม่บังคับ สูงสุด ' + DOC_MAX_DEADLINES + ' รายการ)</span><div id="dlList"></div>' +
+        '<button type="button" class="btn btn-outline btn-block" data-dl-add="1">' + mi('add') + '<span>เพิ่มกำหนดส่ง</span></button></div>' +
+        attachHtml +
+        '<div class="warn-box">' + mi('warning') + '<span>ไฟล์แนบเปิดได้โดยทุกคนที่มีลิงค์ ห้ามใส่หนังสือชั้นความลับ (ลับ/ลับมาก/ลับที่สุด)</span></div>' +
         '<label class="sw-row"><input type="checkbox" name="visible" checked><span>แสดงให้ผู้ใช้เห็น</span></label>',
       actions: [
         { label: 'ยกเลิก', cls: 'btn-outline', onClick: function (h) { h.close(); } },
@@ -1849,18 +2238,30 @@
           onClick: function (h) {
             var b = h.body;
             var name = getVal(b, 'name');
-            if (!name) { toast('กรุณากรอกชื่อเอกสาร', 'error'); return; }
-            var payload = { id: d ? d.id : '', name: name, visible: getChk(b, 'visible') };
+            if (!name) { toast('กรุณากรอกชื่อเรื่อง', 'error'); return; }
+            var dv = docDate.get();
+            if (dv.partial) { toast('ลงวันที่เลือกไม่ครบ หรือไม่ใช่วันที่จริง กรุณาเลือกให้ครบ หรือกด "ล้างวันที่"', 'error', 4500); return; }
+            var detail = b.querySelector('[name=detail]').value.replace(/\r\n?/g, '\n').trim();
+            if (detail.length > DOC_DETAIL_MAX) { toast('รายละเอียดยาวเกิน ' + DOC_DETAIL_MAX + ' ตัวอักษร กรุณาตัดให้สั้นลง', 'error', 4000); return; }
+            var deadlines = [], bad = '';
+            dlRows.forEach(function (r, i) {
+              if (bad) return;
+              var dk = r.date.get(), tk = r.time.get();
+              if (!dk.key && !dk.partial && !tk.value && !tk.partial) return;       // แถวว่างทั้งแถว = ข้าม
+              if (!dk.key) { bad = dk.partial ? 'กำหนดส่งรายการที่ ' + (i + 1) + ' เลือกวันที่ไม่ครบ หรือไม่ใช่วันที่จริง' : 'กรุณาเลือกวันที่ของกำหนดส่งรายการที่ ' + (i + 1); return; }
+              if (tk.partial) { bad = 'กำหนดส่งรายการที่ ' + (i + 1) + ' กรุณาเลือกชั่วโมงด้วย (หรือเลือก "ไม่ระบุ")'; return; }
+              deadlines.push({ date: dk.key, time: tk.value });
+            });
+            if (bad) { toast(bad, 'error', 4500); return; }
+            var payload = {
+              id: d ? d.id : '', name: name, visible: getChk(b, 'visible'), owner: getVal(b, 'owner'), docNo: getVal(b, 'docNo'), docDate: dv.key,
+              speed: b.querySelector('[name=speed]').value, recipients: rcCtl.get(), detail: detail, deadlines: deadlines
+            };
             var step = Promise.resolve();
-            if (d) {
-              if (editLink) {
-                var u = getVal(b, 'url');
-                if (!u) { toast('กรุณาวางลิงค์เอกสาร', 'error'); return; }
-                if (!needHttps(u, 'ลิงค์เอกสาร')) return;
-                payload.url = u;
-              }
-            } else if (mode === 'upload') {
-              if (!picked) { toast('กรุณาเลือกไฟล์ก่อน', 'error'); return; }
+            if (editLink) {
+              var eu = getVal(b, 'url');
+              if (eu) { if (!needHttps(eu, 'ลิงค์เอกสาร')) return; payload.url = eu; }
+            } else if (canAttach && mode === 'upload' && picked) {
               if (picked.size > 8 * 1024 * 1024) { toast('ไฟล์ใหญ่เกิน 8MB กรุณาเลือกไฟล์ที่เล็กกว่า', 'error', 4000); return; }
               toast('กำลังอัปโหลดไฟล์ อาจใช้เวลาสักครู่...', 'info', 3000);
               payload.fileName = picked.name;
@@ -1873,15 +2274,13 @@
               } else {
                 step = readFileBase64(picked).then(function (b64) { payload.base64 = b64; });
               }
-            } else {
+            } else if (canAttach && mode === 'link') {
               var link = getVal(b, 'url');
-              if (!link) { toast('กรุณาวางลิงค์เอกสาร', 'error'); return; }
-              if (!needHttps(link, 'ลิงค์เอกสาร')) return;
-              payload.url = link;
+              if (link) { if (!needHttps(link, 'ลิงค์เอกสาร')) return; payload.url = link; }
             }
             return step.then(function () { return adminApi('saveDocument', payload); })
               .then(function (snap) {
-                applySnapshot(snap); toast('บันทึกเอกสารเรียบร้อย', 'success'); h.close();
+                applySnapshot(snap); toast('บันทึกหนังสือเรียบร้อย', 'success'); h.close();
                 if (snap && snap.shareWarning) toast(SHARE_WARN_MSG, 'error', 5000);
               });
           }
@@ -1889,9 +2288,41 @@
       ]
     });
     var b = m.body;
+    var docDate = bindDateField(b, 'ddate', d ? d.docDate : '', 3, 1);
+    var rcCtl = bindRecipientChips(b.querySelector('#rcWrap'), units, d ? d.recipients : []);
+    b.querySelector('[data-dd-clear]').addEventListener('click', function () { docDate.clear(); });
+    var detailEl = b.querySelector('[name=detail]'), countEl = b.querySelector('#bdCount');
+    function paintCount() { countEl.textContent = detailEl.value.length + ' / ' + DOC_DETAIL_MAX + ' ตัวอักษร'; }
+    detailEl.addEventListener('input', paintCount);
+    // ----- กำหนดส่งรายงาน (เพิ่ม/ลบได้) -----
+    var dlRows = [], dlSeq = 0;
+    var dlListEl = b.querySelector('#dlList'), dlAddBtn = b.querySelector('[data-dl-add]');
+    function renumber() {
+      dlRows.forEach(function (r, i) { r.el.querySelector('[data-no]').textContent = String(i + 1); });
+      dlAddBtn.disabled = dlRows.length >= DOC_MAX_DEADLINES;
+    }
+    function addDlRow(date, time) {
+      if (dlRows.length >= DOC_MAX_DEADLINES) { toast('เพิ่มกำหนดส่งได้ไม่เกิน ' + DOC_MAX_DEADLINES + ' รายการ', 'error', 3000); return; }
+      var n = ++dlSeq, el = document.createElement('div');
+      el.className = 'dl-row';
+      el.innerHTML = '<div class="dl-head"><span>กำหนดส่งที่ <b data-no></b></span><button type="button" class="dl-del" data-dl-del="1" aria-label="ลบกำหนดส่งนี้">' + mi('delete') + '</button></div>' +
+        '<div class="fld"><span>วันที่</span>' + dateFieldHtml('dld' + n) + '</div><div class="fld" style="margin-bottom:0"><span>เวลา (ไม่บังคับ)</span>' + timeFieldHtml('dlt' + n) + '</div>';
+      dlListEl.appendChild(el);
+      var row = { el: el, date: bindDateField(el, 'dld' + n, date || '', 1, 3), time: bindTimeField(el, 'dlt' + n, time || '') };
+      dlRows.push(row);
+      el.querySelector('[data-dl-del]').addEventListener('click', function () {
+        dlRows.splice(dlRows.indexOf(row), 1);
+        if (el.parentNode) el.parentNode.removeChild(el);
+        renumber();
+      });
+      renumber();
+    }
+    dlAddBtn.addEventListener('click', function () { addDlRow('', ''); });
+    if (d) d.deadlines.forEach(function (x) { addDlRow(x.date, x.time); });
+    // ----- ไฟล์แนบ -----
     var fileInput = b.querySelector('[name=docFile]');
     function paintMode() {
-      if (d) return;
+      if (!canAttach) return;
       var segBtns = b.querySelectorAll('[data-mode]');
       for (var i = 0; i < segBtns.length; i++) segBtns[i].classList.toggle('on', segBtns[i].getAttribute('data-mode') === mode);
       b.querySelector('[data-wrap=upload]').hidden = mode !== 'upload';
@@ -1899,20 +2330,21 @@
     }
     var modeBtns = b.querySelectorAll('[data-mode]');
     for (var i = 0; i < modeBtns.length; i++) modeBtns[i].addEventListener('click', function () { mode = this.getAttribute('data-mode'); paintMode(); });
-    b.querySelector('[data-pick]').addEventListener('click', function () { fileInput.click(); });
-    fileInput.addEventListener('change', function () {
-      picked = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
-      b.querySelector('#docPicked').textContent = picked ? picked.name + ' (' + (picked.size / 1048576).toFixed(2) + ' MB)' : 'ยังไม่ได้เลือกไฟล์';
-      if (picked && !getVal(b, 'name')) setVal(b, 'name', picked.name.replace(/\.[^.]+$/, ''));
-    });
-    if (d) {
-      setVal(b, 'name', d.name);
-      b.querySelector('[name=visible]').checked = !!d.visible;
-      if (editLink) {
-        var cur = findIn(state.data ? state.data.documents : [], d.id);
-        setVal(b, 'url', d.url || (cur ? cur.url : ''));
-      }
+    if (fileInput) {
+      b.querySelector('[data-pick]').addEventListener('click', function () { fileInput.click(); });
+      fileInput.addEventListener('change', function () {
+        picked = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+        b.querySelector('#docPicked').textContent = picked ? picked.name + ' (' + (picked.size / 1048576).toFixed(2) + ' MB)' : 'ยังไม่ได้เลือกไฟล์ (ไม่แนบไฟล์ก็ได้)';
+        if (picked && !getVal(b, 'name')) setVal(b, 'name', picked.name.replace(/\.[^.]+$/, ''));
+      });
     }
+    if (d) {
+      setVal(b, 'name', d.name); setVal(b, 'owner', d.owner); setVal(b, 'docNo', d.docNo); setVal(b, 'detail', d.detail);
+      b.querySelector('[name=speed]').value = d.speed;
+      b.querySelector('[name=visible]').checked = !!d.visible;
+      if (editLink) setVal(b, 'url', d.url);
+    }
+    paintCount();
     paintMode();
   }
 
@@ -1960,8 +2392,10 @@
     var defDate = ms ? ms.date : ((f.y === tp.y && f.m === tp.m) ? todayKey() : dateKey(f.y, f.m, 1));
     var m = openModal({
       title: ms ? 'แก้ไขภารกิจ' : 'เพิ่มภารกิจ', icon: 'event', focus: '[name=title]',
-      body: fieldInput('ชื่อภารกิจ *', 'title', { max: 100, ph: 'เช่น ประชุมประจำเดือน' }) +
-        '<div class="fld"><span>วันที่ *</span>' + dateFieldHtml('mdate') + '</div>' +
+      body: '<div class="fld"><span>ประเภทวันที่</span><div class="seg" style="margin-bottom:0"><button type="button" data-rmode="single">วันเดียว</button><button type="button" data-rmode="range">ห้วงวันที่</button></div></div>' +
+        fieldInput('ชื่อภารกิจ *', 'title', { max: 100, ph: 'เช่น ประชุมประจำเดือน' }) +
+        '<div class="fld"><span id="mdLbl">วันที่ *</span>' + dateFieldHtml('mdate') + '</div>' +
+        '<div class="fld" id="mEndWrap" hidden><span>วันสิ้นสุด *</span>' + dateFieldHtml('medate') + '<div class="range-sum" id="rangeSum" aria-live="polite"></div></div>' +
         '<div class="fld"><span>เวลา (24 ชั่วโมง ชั่วโมง.นาที)</span>' + timeFieldHtml('mtime') + '<div class="hint">ไม่เลือกชั่วโมง = ไม่ระบุเวลา (แสดงเป็น "ทั้งวัน")</div></div>' +
         fieldInput('สถานที่', 'place', { max: 100 }) + fieldInput('ผู้รับผิดชอบ', 'owner', { max: 60 }) +
         '<div class="fld"><span>หมวด</span><div class="seg seg-grid" style="margin-bottom:0">' +
@@ -1983,10 +2417,19 @@
             if (!dv.key) { toast(dv.partial ? 'วันที่เลือกไม่ครบ หรือไม่ใช่วันที่จริง กรุณาเลือก วัน เดือน ปี ให้ถูกต้อง' : 'กรุณาเลือกวันที่ของภารกิจ', 'error', 4500); return; }
             var tv = timeCtl.get();
             if (tv.partial) { toast('กรุณาเลือกชั่วโมงด้วย (หรือเลือก "ไม่ระบุ" ที่ช่องชั่วโมง)', 'error', 4500); return; }
+            var endKey = '';
+            if (rmode === 'range') {
+              var ev = endCtl.get();
+              if (!ev.key) { toast(ev.partial ? 'วันสิ้นสุดเลือกไม่ครบ หรือไม่ใช่วันที่จริง' : 'กรุณาเลือกวันสิ้นสุดของห้วง', 'error', 4500); return; }
+              var span = diffDays(dv.key, ev.key);
+              if (span < 0) { toast('วันสิ้นสุดของห้วงต้องไม่ก่อนวันเริ่ม', 'error', 4500); return; }
+              if (span + 1 > MISSION_MAX_SPAN) { toast('ห้วงภารกิจยาวเกินไป (ไม่เกิน ' + MISSION_MAX_SPAN + ' วัน)', 'error', 4500); return; }
+              if (span > 0) endKey = ev.key;
+            }
             var detail = getVal(b, 'detail');
             if (detail.length > 500) { toast('รายละเอียดยาวเกิน 500 ตัวอักษร กรุณาตัดให้สั้นลง', 'error', 4000); return; }
             return adminApi('saveMission', {
-              id: ms ? ms.id : '', title: title, date: dv.key, time: tv.value, place: getVal(b, 'place'), owner: getVal(b, 'owner'),
+              id: ms ? ms.id : '', title: title, date: dv.key, endDate: endKey, time: tv.value, place: getVal(b, 'place'), owner: getVal(b, 'owner'),
               category: pickCat(), color: colorCp.get() || MISSION_COLOR_DEFAULT, detail: detail,
               visibility: getChk(b, 'adminOnly') ? 'admin' : 'public', visible: getChk(b, 'visible')
             }).then(function (snap) {
@@ -1999,7 +2442,29 @@
       ]
     });
     var b = m.body;
-    var dateCtl = bindDateField(b, 'mdate', defDate, 1, 3);
+    var rmode = ms && ms.endDate && ms.endDate > ms.date ? 'range' : 'single';
+    function paintRange() {
+      var bt = b.querySelectorAll('[data-rmode]');
+      for (var i = 0; i < bt.length; i++) bt[i].classList.toggle('on', bt[i].getAttribute('data-rmode') === rmode);
+      b.querySelector('#mEndWrap').hidden = rmode !== 'range';
+      b.querySelector('#mdLbl').textContent = rmode === 'range' ? 'วันเริ่ม *' : 'วันที่ *';
+      var sum = b.querySelector('#rangeSum'), sd = dateCtl.get().key, ed = endCtl.get().key;
+      sum.classList.remove('err');
+      if (rmode !== 'range') { sum.textContent = ''; return; }
+      if (!sd || !ed) { sum.textContent = 'เลือกวันเริ่มและวันสิ้นสุด'; return; }
+      var n = diffDays(sd, ed) + 1;
+      if (n < 1) { sum.textContent = 'วันสิ้นสุดต้องไม่ก่อนวันเริ่ม'; sum.classList.add('err'); }
+      else if (n > MISSION_MAX_SPAN) { sum.textContent = 'รวม ' + n + ' วัน (เกิน ' + MISSION_MAX_SPAN + ' วัน)'; sum.classList.add('err'); }
+      else sum.textContent = 'รวม ' + n + ' วัน';
+    }
+    var dateCtl = bindDateField(b, 'mdate', defDate, 1, 3, function () { paintRange(); });
+    var endCtl = bindDateField(b, 'medate', ms && ms.endDate ? ms.endDate : '', 1, 3, function () { paintRange(); });
+    var rBtns = b.querySelectorAll('[data-rmode]');
+    for (var ri = 0; ri < rBtns.length; ri++) rBtns[ri].addEventListener('click', function () {
+      rmode = this.getAttribute('data-rmode');
+      if (rmode === 'range' && !endCtl.get().key && dateCtl.get().key) endCtl.set(dateCtl.get().key);
+      paintRange();
+    });
     var timeCtl = bindTimeField(b, 'mtime', ms ? ms.time : '');
     var pickCat = bindPicker(b, '[data-cat]', 'data-cat', ms && MISSION_CATS.indexOf(ms.category) >= 0 ? ms.category : MISSION_CATS[0]);
     var colorCp = bindColorGrid(b.querySelector('#mcWrap'), ms && safeHex(ms.color) ? ms.color : MISSION_COLOR_DEFAULT);
@@ -2012,6 +2477,36 @@
       b.querySelector('[name=visible]').checked = !!ms.visible;
     }
     paintCount();
+    paintRange();
+  }
+
+  /** ฟอร์มเพิ่ม/แก้หน่วยผู้รับ: ชื่อ, กลุ่ม, แสดง (ลำดับจัดด้วยปุ่มเลื่อนในรายการ) */
+  function openUnitForm(id) {
+    var u = id && state.admin ? findIn(state.admin.units || [], id) : null;
+    var m = openModal({
+      title: u ? 'แก้ไขหน่วยผู้รับ' : 'เพิ่มหน่วยผู้รับ', icon: 'groups', focus: '[name=name]',
+      body: fieldInput('ชื่อหน่วย *', 'name', { max: 60, ph: 'เช่น ภ.จว.ราชบุรี' }) +
+        '<label class="fld"><span>กลุ่ม</span><select class="inp" name="group">' + UNIT_GROUPS.map(function (g) { return '<option value="' + esc(g) + '">' + esc(g) + '</option>'; }).join('') + '</select></label>' +
+        '<label class="sw-row"><input type="checkbox" name="visible" checked><span>แสดงในรายการเลือกของผู้ใช้</span></label>',
+      actions: [
+        { label: 'ยกเลิก', cls: 'btn-outline', onClick: function (h) { h.close(); } },
+        {
+          label: 'บันทึก', icon: 'save', cls: 'btn-primary',
+          onClick: function (h) {
+            var b = h.body, name = getVal(b, 'name');
+            if (!name) { toast('กรุณากรอกชื่อหน่วย', 'error'); return; }
+            return adminApi('saveUnit', { id: u ? u.id : '', name: name, group: b.querySelector('[name=group]').value, visible: getChk(b, 'visible') })
+              .then(function (snap) { applySnapshot(snap); toast('บันทึกหน่วยเรียบร้อย', 'success'); h.close(); });
+          }
+        }
+      ]
+    });
+    var b = m.body;
+    if (u) {
+      setVal(b, 'name', u.name);
+      b.querySelector('[name=group]').value = UNIT_GROUPS.indexOf(u.group) >= 0 ? u.group : 'อื่นๆ';
+      b.querySelector('[name=visible]').checked = !!u.visible;
+    }
   }
 
   // ===== ตั้งค่า: โลโก้และหน้าแรก =====
@@ -2121,7 +2616,7 @@
     });
   }
 
-  var FORM_OPENERS = { systems: openSystemForm, banners: openBannerForm, contacts: openContactForm, announcements: openAnnouncementForm, documents: openDocumentForm, missions: openMissionForm };
+  var FORM_OPENERS = { systems: openSystemForm, banners: openBannerForm, contacts: openContactForm, announcements: openAnnouncementForm, documents: openDocumentForm, missions: openMissionForm, units: openUnitForm };
 
   // ===== ตัวจัดการคลิกทั้งหมด (event delegation) =====
   var ACTIONS = {
@@ -2213,7 +2708,24 @@
     // ----- ปฏิทินภารกิจ -----
     'open-cal': function () { openCalendar(); },
     'cal-open': function (el) { openCalendar(el.getAttribute('data-date')); },
-    'cal-back': function () { showView(state.calFrom === 'notif' ? 'notif' : 'home'); },
+    'cal-back': function () { showView(state.calFrom === 'notif' ? 'notif' : (state.calFrom === 'docs' ? 'docs' : 'home')); },
+    // ----- หนังสือแจ้งเตือน -----
+    'bk-open': function (el) { openBookModal(el.getAttribute('data-id')); },
+    'bk-more': function (el) {
+      var card = el.closest ? el.closest('.bk-card') : null;
+      if (!card) return;
+      var open = card.classList.toggle('open');
+      el.setAttribute('aria-expanded', open ? 'true' : 'false');
+      var t = el.querySelector('.bk-more-t');
+      if (t) t.textContent = open ? 'ย่อรายละเอียด' : 'ดูทั้งหมด (' + (el.getAttribute('data-n') || '') + ' ข้อ)';
+    },
+    'bk-cal': function (el) {
+      var k = el.getAttribute('data-date');
+      while (modalStack.length) modalStack[modalStack.length - 1].close();      // ถ้าเปิดจากหน้าต่างหนังสือ ให้ปิดก่อน
+      openCalendar(isRealKey(k) ? k : todayKey());
+    },
+    'my-unit': function () { openMyUnitModal(); },
+    'doc-filter': function (el) { state.docFilter = el.getAttribute('data-f') === 'all' ? 'all' : 'mine'; renderDocsView(); },
     'cal-prev': function () { if (state.cal) calGoMonth(state.cal.y, state.cal.m - 1); },
     'cal-next': function () { if (state.cal) calGoMonth(state.cal.y, state.cal.m + 1); },
     'cal-today': function () { openCalendar(todayKey()); },
@@ -2319,6 +2831,9 @@
     backspace: 'M9 5h11v14H9l-6-7zM12 9l5 6M17 9l-5 6',
     palette: 'M12 3a9 9 0 100 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a3 3 0 003-3c0-5-4-11-8-11zM7.5 11.5h.01M10.5 7.5h.01M15 8h.01',
     chevron_left: 'M15 5l-7 7 7 7',
+    alarm: 'M12 5a7 7 0 100 14 7 7 0 000-14zM12 9v4l2.5 1.5M4 6l3-3M20 6l-3-3',
+    expand_more: 'M6 9l6 6 6-6',
+    expand_less: 'M6 15l6-6 6 6',
     clock: 'M12 4a8 8 0 100 16 8 8 0 000-16zM12 8v4l3 2'
   };
   // ชื่อไอคอนของฟอนต์ -> ชื่อรูปใน SVG_PATHS (ตัวที่ไม่อยู่ในรายการใช้รูปวงกลมแทน)
@@ -2331,7 +2846,7 @@
     local_police: 'shield', security: 'shield', policy: 'shield', badge: 'person', fingerprint: 'person',
     description: 'doc', article: 'doc', assignment: 'doc', picture_as_pdf: 'doc', table_chart: 'doc', slideshow: 'doc',
     inventory_2: 'inbox', view_carousel: 'carousel', insights: 'chart', bar_chart: 'chart', check_box_outline_blank: 'box_empty',
-    location_on: 'pin', calendar_month: 'calendar', groups: 'people',
+    location_on: 'pin', calendar_month: 'calendar', date_range: 'calendar', groups: 'people',
     event: 'calendar', today: 'calendar', event_note: 'calendar', place: 'pin', schedule: 'clock',
     call: 'phone', contact_phone: 'phone', contacts: 'people', restart_alt: 'refresh', dashboard_customize: 'home', add_photo_alternate: 'image', check_box: 'check'
   };
@@ -2402,7 +2917,8 @@
   // ===== เริ่มทำงาน =====
   function boot() {
     watchIconFont();
-    lsDel(MISSION_SEEN_KEY_OLD);   // ลบคีย์ v1 เก่าที่อาจมี id ภารกิจ admin ค้างอยู่
+    MISSION_SEEN_KEYS_OLD.forEach(function (k) { lsDel(k); });   // ลบคีย์เก่าที่อาจมี id ภารกิจ admin ค้างอยู่
+    lsDel(CACHE_KEY_OLD);
     state.token = ssGet(TOKEN_KEY) || '';
     var track = $('bannerTrack');
     var scrollTimer = null;
