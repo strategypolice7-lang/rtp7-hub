@@ -22,7 +22,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap" rel="stylesheet">
 <style>
-/* ===== ค่าพื้นฐาน / สี (ธีมน้ำเงิน-เหลือง ดีไซน์ v3.0 / v3.1 เพิ่มป้ายวงกลมและปฏิทินภารกิจ) ===== */
+/* ===== ค่าพื้นฐาน / สี (ธีมน้ำเงิน-เหลือง ดีไซน์ v3.0 / v3.1 เพิ่มป้ายวงกลมและปฏิทินภารกิจ / v3.2 ห้วงภารกิจและหนังสือแจ้งเตือน) ===== */
 :root{
   --hdr:#0D2B6B; --pri:#1A4FA8; --pri-soft:#DCEBFA;
   --txt:#0D2B6B; --mut:#5B6F86; --line:#CFE0F1;
@@ -63,6 +63,8 @@ html.icons-fallback .mi{width:1em;height:1em;overflow:visible}
 .hdr-txt{flex:1;min-width:0}
 .hdr-sm{font-size:12px;line-height:1.25;color:#FFE35C;font-weight:500}
 .hdr-big{font-size:20px;font-weight:600;line-height:1.25;color:#FFD400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* เลขเวอร์ชันสั้นต่อท้ายชื่อระบบ (ตัวเล็ก 12px) ข้อมูลมาจากหลังบ้าน ยังไม่โหลด = ว่าง */
+.hdr-ver{font-size:12px;font-weight:500;color:#D6E4F7;margin-left:6px;vertical-align:baseline}
 .hdr-btn{position:relative;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;flex:none;transition:transform .15s ease}
 .hdr-btn:active{background:rgba(255,255,255,.25);transform:scale(.98)}
 .hdr-btn.admin-on{background:rgba(255,255,255,.25)}
@@ -160,7 +162,6 @@ html.icons-fallback .mi{width:1em;height:1em;overflow:visible}
 /* ปุ่ม + เพิ่มระบบ (admin) เป็นวงเหลือง */
 .sys-add .sys-ico{--c:#FFD400;color:#0D2B6B}
 .sys-add .sys-lbl{font-weight:600}
-.ver-line{text-align:center;color:var(--mut);font-size:12px;padding:12px 0 4px}
 
 /* ===== รายการแถว (เอกสาร / ค้นหา / ตั้งค่า) ===== */
 .card-list{background:#fff;border-radius:18px;border:1px solid var(--line);overflow:hidden;box-shadow:0 2px 10px rgba(13,43,107,.08)}
@@ -453,6 +454,66 @@ textarea.inp{min-height:110px;resize:vertical}
   .modal{max-width:480px}
   .pin-modal{max-width:360px}
 }
+/* ===== v3.2 ห้วงภารกิจ / กำหนดส่ง ในปฏิทินและการ์ดใกล้ถึง ===== */
+.m-row.prog{background:#FFF8E6}
+.m-day.prog{background:#FFE9A8;color:#6B4A00}
+.m-row.dl{border-left-color:#C81E1E}
+.m-alarm{color:#C81E1E;flex:none}
+.cal-bars{align-self:stretch;margin:0 -2px;display:flex;flex-direction:column;gap:2px}
+.cal-bar{display:block;height:6px;background:var(--mc,#1A4FA8)}
+.cal-bar.sp{background:transparent}
+.cal-bar.bs{margin-left:6px;border-radius:3px 0 0 3px}
+.cal-bar.be{margin-right:6px;border-radius:0 3px 3px 0}
+.cal-bar.bs.be{border-radius:3px}
+.cal-dots{flex-wrap:wrap;min-height:8px}
+.cal-dots i.dl{border-radius:2px;transform:rotate(45deg) scale(.85);background:#C81E1E}
+.cal-more{font-size:12px;font-weight:600;color:var(--mut);line-height:1}
+button.cm-item{width:calc(100% - 24px);text-align:left;font:inherit;color:inherit;min-height:48px}
+.cm-dl{border-left-color:#C81E1E;background:#FDECEC}
+.cm-alarm{color:#C81E1E;flex:none}
+
+/* ===== v3.2 การ์ดหนังสือแจ้งเตือน ===== */
+.bk-card{background:#fff;border-radius:18px;border:1px solid var(--line);box-shadow:0 2px 10px rgba(13,43,107,.08);padding:14px;margin-bottom:12px}
+.bk-card.in-modal{box-shadow:none;border:0;padding:0;margin:0}
+.bk-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px}
+.bk-speed{display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border-radius:13px;font-size:13px;font-weight:600;background:#E6EAEF;color:#3F4D5C}
+.bk-speed.s1{background:#F6B93B;color:#0D2B6B}
+.bk-speed.s2{background:#C2410C;color:#fff}
+.bk-speed.s3{background:#C81E1E;color:#fff}
+.bk-meta{font-size:13px;color:var(--mut);overflow-wrap:anywhere;min-width:0}
+.bk-title{font-size:17px;font-weight:600;line-height:1.4;overflow-wrap:anywhere;margin-bottom:4px}
+.bk-to{font-size:14px;color:var(--txt);overflow-wrap:anywhere;margin-bottom:6px}
+.bk-ol{margin:4px 0 4px 22px;padding:0;font-size:15px;line-height:1.5;overflow-wrap:anywhere}
+.bk-ol li{margin-bottom:2px}
+.bk-card.fold:not(.open) .bk-ol li:nth-child(n+4){display:none}
+.bk-more{display:none}
+.bk-card.fold .bk-more{display:inline-flex}
+.bk-dl{margin-top:8px;padding:10px 12px;border-radius:12px;background:#FDECEC;border:1px solid #F3C1C1;color:#8A1414}
+.bk-dl-h{display:flex;align-items:center;gap:6px;font-weight:600;font-size:14px;margin-bottom:4px}
+.bk-dl-h .mi{font-size:20px;color:#C81E1E}
+.bk-dl-row{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:3px 0;overflow-wrap:anywhere}
+.bk-dl-row .rel{font-weight:600;white-space:nowrap;flex:none}
+.bk-dl-row.today .rel{color:#B3261E}
+.bk-dl-row.over{color:#6D1010}
+.bk-acts{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.bk-acts .btn{flex:1;min-width:140px}
+.myunit{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:8px 12px;margin-bottom:10px;border-radius:14px;background:#fff;border:1px solid var(--line);text-align:left;transition:transform .15s ease}
+.myunit:active{transform:scale(.98)}
+.myunit .lead{background:var(--pri)}
+.mu-t{display:block;font-size:13px;color:var(--mut)}
+.mu-v{display:block;font-weight:600;font-size:16px;overflow-wrap:anywhere}
+.u-grp{padding:8px 14px 4px;font-size:13px;font-weight:600;color:var(--mut);background:#F2F8FE}
+
+/* ===== v3.2 ฟอร์ม: ชิปเลือกหน่วย / กำหนดส่ง / ห้วงวันที่ ===== */
+.chip-set{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
+.chip-b{min-height:48px;padding:0 14px;border-radius:24px;border:1px solid #B7C9E4;background:#fff;color:var(--pri);font-weight:500;font-size:15px}
+.chip-b.quick{border-style:dashed}
+.chip-b.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.dl-row{margin-bottom:10px;padding:10px 12px;border-radius:12px;background:#FDECEC;border:1px solid #F3C1C1}
+.dl-head{display:flex;align-items:center;justify-content:space-between;font-weight:600;color:#8A1414;margin-bottom:6px}
+.dl-del{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#C81E1E;background:#fff;flex:none}
+.range-sum{margin-top:8px;font-weight:600;color:var(--pri);font-size:14px}
+.range-sum.err{color:var(--err)}
 </style>
 </head>
 <body>
@@ -462,7 +523,7 @@ textarea.inp{min-height:110px;resize:vertical}
       <div class="logo" id="hdrLogo" data-id=""><span class="mi">shield</span></div>
       <div class="hdr-txt">
         <div class="hdr-sm">ตำรวจภูธรภาค 7</div>
-        <div class="hdr-big">รวมระบบงาน ป.</div>
+        <div class="hdr-big">รวมระบบงาน ป.<span class="hdr-ver" id="hdrVer" hidden></span></div>
       </div>
       <button class="hdr-btn" id="bellBtn" data-act="bell" aria-label="แจ้งเตือน">
         <span class="mi">notifications</span>
@@ -497,13 +558,12 @@ textarea.inp{min-height:110px;resize:vertical}
           <div class="card-head"><h2>ระบบงาน</h2></div>
           <div id="sysGrid" class="sys-grid"></div>
         </div>
-        <div id="verLine" class="ver-line">รวมระบบงาน ป.</div>
       </section>
 
       <!-- เอกสารทั้งหมด -->
       <section id="view-docs" class="view">
-        <h2 class="sec-title">เอกสารดาวน์โหลด</h2>
-        <div class="search-box"><span class="mi">search</span><input id="docSearch" type="search" placeholder="ค้นหาชื่อเอกสาร" autocomplete="off" aria-label="ค้นหาเอกสาร"></div>
+        <h2 class="sec-title">หนังสือและเอกสาร</h2>
+        <div class="search-box"><span class="mi">search</span><input id="docSearch" type="search" placeholder="ค้นหาชื่อเรื่อง เลขที่ หรือหนังสือของ" autocomplete="off" aria-label="ค้นหาหนังสือและเอกสาร"></div>
         <div id="docList"></div>
       </section>
 
@@ -566,8 +626,8 @@ textarea.inp{min-height:110px;resize:vertical}
 <div id="modalRoot"></div>
 <div id="toastRoot" aria-live="polite"></div>
 
-<!-- ?v=3.1 กันมือถือค้างไฟล์เก่า (เปลี่ยนเลขเมื่อออกเวอร์ชันใหม่) -->
-<script src="config.js?v=3.1"></script>
-<script src="app.js?v=3.1"></script>
+<!-- ?v=3.2 กันมือถือค้างไฟล์เก่า (เปลี่ยนเลขเมื่อออกเวอร์ชันใหม่) -->
+<script src="config.js?v=3.2"></script>
+<script src="app.js?v=3.2"></script>
 </body>
 </html>
